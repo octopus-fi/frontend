@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,9 +17,23 @@ import {
   Github,
   Twitter,
   MessageCircle,
+  ChevronDown,
+  Settings,
+  LogOut,
+  Wallet,
 } from "lucide-react";
+import { useState } from "react";
+import { useWalletStore } from "@/store/wallet-store";
+import { useUIStore } from "@/store/ui-store";
+import { usePhantomWallet } from "@/hooks/usePhantomWallet";
+import { formatCurrency, truncateAddress } from "@/lib/utils";
 
 export default function LandingPage() {
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const { address, connected, balance, disconnect } = useWalletStore();
+  const { toggleSidebar, notifications } = useUIStore();
+  const { connectWallet, disconnectWallet } = usePhantomWallet();
+
   return (
     <div className="min-h-screen">
       {/* Navigation */}
@@ -55,11 +69,95 @@ export default function LandingPage() {
             >
               Stats
             </Link>
-            <Link href="/dashboard">
-              <Button variant="electric" className="gap-2">
-                Launch App <ArrowRight className="h-4 w-4" />
+
+            {/* Wallet Connection */}
+            {connected && address ? (
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => setAccountMenuOpen(!accountMenuOpen)}
+                >
+                  <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="hidden sm:inline">
+                    {truncateAddress(address)}
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+
+                <AnimatePresence>
+                  {accountMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute right-0 mt-2 w-64 glass border border-white/10 rounded-lg shadow-xl overflow-hidden"
+                    >
+                      {/* Balance Display */}
+                      <div className="p-4 border-b border-white/10">
+                        <div className="text-xs text-muted-foreground mb-2">
+                          Total Balance
+                        </div>
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">SUI</span>
+                            <span className="font-mono font-bold">
+                              {formatCurrency(Number(balance.sui) / 1e9)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">octSUI</span>
+                            <span className="font-mono font-bold">
+                              {formatCurrency(Number(balance.octSUI) / 1e9)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">octUSD</span>
+                            <span className="font-mono font-bold">
+                              {formatCurrency(Number(balance.octUSD) / 1e6)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="p-2">
+                        <button className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-white/5 rounded-md transition-colors">
+                          <Settings className="h-4 w-4" />
+                          Settings
+                        </button>
+                        <button
+                          className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-white/5 rounded-md transition-colors text-red-400"
+                          onClick={() => {
+                            disconnectWallet();
+                            setAccountMenuOpen(false);
+                          }}
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Disconnect
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Button
+                variant="electric"
+                className="gap-2"
+                onClick={connectWallet}
+              >
+                <Wallet className="h-4 w-4" />
+                <span className="hidden sm:inline">Connect Wallet</span>
               </Button>
-            </Link>
+            )}
+            {connected && (
+              <Link href="/dashboard">
+                <Button variant="electric" className="gap-2">
+                  Launch App <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </motion.nav>
