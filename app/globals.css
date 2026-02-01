@@ -1,0 +1,263 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+@import "tailwindcss";
+
+/* Octopus Finance - Dark Finance Design System
+   All colors are HSL for proper Tailwind integration
+*/
+@theme {
+  /* Light Theme */
+  --color-background: hsl(0 0% 100%);
+  --color-foreground: hsl(220 35% 7%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(220 35% 7%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(220 35% 7%);
+
+  /* Primary — Electric Cyan */
+  --color-primary: hsl(187 100% 50%);
+  --color-primary-foreground: hsl(220 35% 7%);
+
+  /* Secondary */
+  --color-secondary: hsl(220 20% 92%);
+  --color-secondary-foreground: hsl(220 35% 7%);
+
+  /* Muted */
+  --color-muted: hsl(220 20% 92%);
+  --color-muted-foreground: hsl(220 10% 40%);
+
+  /* Accent — AI Purple */
+  --color-accent: hsl(263 70% 58%);
+  --color-accent-foreground: hsl(0 0% 100%);
+
+  /* Status */
+  --color-destructive: hsl(0 84% 60%);
+  --color-success: hsl(160 84% 39%);
+  --color-warning: hsl(43 96% 56%);
+
+  /* UI */
+  --color-border: hsl(220 20% 85%);
+  --color-input: hsl(220 20% 90%);
+  --color-ring: hsl(187 100% 50%);
+
+  /* Sidebar */
+  --color-sidebar-background: hsl(0 0% 98%);
+  --color-sidebar-foreground: hsl(220 35% 7%);
+  --color-sidebar-primary: hsl(187 100% 50%);
+  --color-sidebar-accent: hsl(220 20% 92%);
+  --color-sidebar-border: hsl(220 20% 85%);
+
+  /* Surfaces */
+  --color-surface: hsl(0 0% 100%);
+  --color-surface-hover: hsl(220 20% 97%);
+
+  /* Layout */
+  --spacing-container: 1280px;
+
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+/* ===============================
+   Dark Theme (Primary)
+================================ */
+
+.dark {
+  --color-background: hsl(220 35% 7%);
+  --color-foreground: hsl(210 40% 98%);
+  --color-card: hsl(220 30% 10%);
+  --color-card-foreground: hsl(210 40% 98%);
+  --color-popover: hsl(220 30% 10%);
+  --color-popover-foreground: hsl(210 40% 98%);
+
+  --color-primary: hsl(187 100% 50%);
+  --color-primary-foreground: hsl(220 35% 7%);
+
+  --color-secondary: hsl(220 20% 18%);
+  --color-secondary-foreground: hsl(210 40% 98%);
+
+  --color-muted: hsl(220 20% 18%);
+  --color-muted-foreground: hsl(220 10% 60%);
+
+  --color-accent: hsl(263 70% 58%);
+  --color-accent-foreground: hsl(210 40% 98%);
+
+  --color-destructive: hsl(0 84% 60%);
+  --color-success: hsl(160 84% 39%);
+  --color-warning: hsl(43 96% 56%);
+
+  --color-border: hsl(220 20% 20%);
+  --color-input: hsl(220 20% 18%);
+  --color-ring: hsl(187 100% 50%);
+
+  --color-sidebar-background: hsl(220 30% 8%);
+  --color-sidebar-foreground: hsl(210 40% 98%);
+  --color-sidebar-primary: hsl(187 100% 50%);
+  --color-sidebar-accent: hsl(220 20% 15%);
+  --color-sidebar-border: hsl(220 20% 18%);
+
+  --color-surface: hsl(220 30% 10%);
+  --color-surface-hover: hsl(220 20% 15%);
+}
+
+/* ===============================
+   Base Styles
+================================ */
+
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* ===============================
+   Container
+================================ */
+
+.container {
+  width: 100%;
+  max-width: var(--spacing-container);
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container { padding-inline: 1.5rem; }
+}
+
+@media (min-width: 1024px) {
+  .container { padding-inline: 2rem; }
+}
+
+/* ===============================
+   Scrollbar
+================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-muted);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+
+/* ===============================
+   Gradients & Glow
+================================ */
+
+.text-gradient {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(
+    to right,
+    var(--color-primary),
+    var(--color-accent)
+  );
+}
+
+.text-gradient-primary {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(
+    135deg,
+    hsl(187 100% 50%) 0%,
+    hsl(200 100% 60%) 100%
+  );
+}
+
+.glow-primary {
+  box-shadow:
+    0 0 20px hsl(187 100% 50% / 0.35),
+    0 0 40px hsl(187 100% 50% / 0.25);
+}
+
+.glow-accent {
+  box-shadow:
+    0 0 20px hsl(263 70% 58% / 0.35),
+    0 0 40px hsl(263 70% 58% / 0.25);
+}
+
+/* ===============================
+   Cards & Glass
+================================ */
+
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  border-color: hsl(187 100% 50% / 0.5);
+  box-shadow: 0 10px 40px -10px hsl(187 100% 50% / 0.35);
+  transform: translateY(-2px);
+}
+
+.glass {
+  background-color: hsl(220 30% 10% / 0.7);
+  backdrop-filter: blur(24px);
+  border: 1px solid hsl(220 20% 20% / 0.6);
+}
+
+/* ===============================
+   Status Badges
+================================ */
+
+.status-pending {
+  background: hsl(43 96% 56% / 0.12);
+  color: var(--color-warning);
+  border: 1px solid hsl(43 96% 56% / 0.25);
+}
+
+.status-approved {
+  background: hsl(160 84% 39% / 0.12);
+  color: var(--color-success);
+  border: 1px solid hsl(160 84% 39% / 0.25);
+}
+
+.status-rejected {
+  background: hsl(0 84% 60% / 0.12);
+  color: var(--color-destructive);
+  border: 1px solid hsl(0 84% 60% / 0.25);
+}
+
+/* ===============================
+   Fonts
+================================ */
+
+.font-mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.font-display {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+.font-sans {
+  font-family: 'Inter', system-ui, sans-serif;
+}
