@@ -3,221 +3,254 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle, CheckCircle2, XCircle, Shield } from 'lucide-react';
 
 interface HealthFactorGaugeProps {
-  value: number;
-  size?: 'sm' | 'md' | 'lg';
+  healthFactor: number;
+  ltv: number;
+  compact?: boolean;
   showLabel?: boolean;
-  showLiquidationPrice?: boolean;
-  liquidationPrice?: number;
   className?: string;
 }
 
 export function HealthFactorGauge({
-  value,
-  size = 'md',
+  healthFactor,
+  ltv,
+  compact = false,
   showLabel = true,
-  showLiquidationPrice = false,
-  liquidationPrice,
   className,
 }: HealthFactorGaugeProps) {
   // Clamp value to reasonable range for display
-  const displayValue = Math.min(value, 3.0);
+  const displayValue = healthFactor === Infinity ? 3.0 : Math.min(healthFactor, 3.0);
   const percentage = (displayValue / 3.0) * 100;
   
-  // Determine color and status
+  // Determine color and status based on health factor
   const getColorAndStatus = () => {
-    if (value < 1.0) {
+    if (healthFactor < 1.0) {
       return {
         color: '#EF4444',
         status: 'Liquidated',
         icon: XCircle,
-        glowClass: 'glow-danger',
+        glowClass: 'shadow-red-500/50',
         badgeVariant: 'danger' as const,
+        bgGradient: 'from-red-500/20 to-orange-500/20',
       };
     }
-    if (value < 1.2) {
+    if (healthFactor < 1.2) {
       return {
         color: '#EF4444',
         status: 'Critical Risk',
         icon: XCircle,
-        glowClass: 'glow-danger',
+        glowClass: 'shadow-red-500/50',
         badgeVariant: 'danger' as const,
+        bgGradient: 'from-red-500/20 to-orange-500/20',
       };
     }
-    if (value < 1.5) {
+    if (healthFactor < 1.5) {
       return {
         color: '#F59E0B',
         status: 'Medium Risk',
         icon: AlertTriangle,
-        glowClass: 'glow-warning',
+        glowClass: 'shadow-yellow-500/50',
         badgeVariant: 'warning' as const,
+        bgGradient: 'from-yellow-500/20 to-amber-500/20',
       };
     }
     return {
       color: '#10B981',
       status: 'Safe',
       icon: CheckCircle2,
-      glowClass: 'glow-safe',
+      glowClass: 'shadow-green-500/50',
       badgeVariant: 'success' as const,
+      bgGradient: 'from-green-500/20 to-emerald-500/20',
     };
   };
 
-  const { color, status, icon: StatusIcon, badgeVariant } = getColorAndStatus();
+  const { color, status, icon: StatusIcon, glowClass, badgeVariant, bgGradient } = getColorAndStatus();
 
-  // Size configurations
-  const sizeConfig = {
-    sm: {
-      height: 80,
-      width: 160,
-      fontSize: 'text-lg',
-      badgeSize: 'text-xs',
-      iconSize: 'h-4 w-4',
-    },
-    md: {
-      height: 120,
-      width: 240,
-      fontSize: 'text-3xl',
-      badgeSize: 'text-sm',
-      iconSize: 'h-5 w-5',
-    },
-    lg: {
-      height: 160,
-      width: 320,
-      fontSize: 'text-4xl',
-      badgeSize: 'text-base',
-      iconSize: 'h-6 w-6',
-    },
-  };
-
-  const config = sizeConfig[size];
-
-  return (
-    <div className={cn('relative', className)}>
-      {/* SVG Gauge */}
-      <svg
-        width={config.width}
-        height={config.height}
-        viewBox={`0 0 ${config.width} ${config.height}`}
-        className="w-full h-full"
-      >
-        {/* Background arc */}
-        <path
-          d={`M 20 ${config.height - 20} A 100 100 0 0 1 ${config.width - 20} ${config.height - 20}`}
-          fill="none"
-          stroke="hsl(var(--muted))"
-          strokeWidth="12"
-          strokeLinecap="round"
-        />
-        
-        {/* Filled arc with animation */}
-        <motion.path
-          d={`M 20 ${config.height - 20} A 100 100 0 0 1 ${config.width - 20} ${config.height - 20}`}
-          fill="none"
-          stroke={color}
-          strokeWidth="12"
-          strokeLinecap="round"
-          strokeDasharray="314"
-          initial={{ strokeDashoffset: 314 }}
-          animate={{ strokeDashoffset: 314 - (314 * percentage) / 100 }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-          style={{
-            filter: `drop-shadow(0 0 8px ${color})`,
-          }}
-        />
-        
-        {/* Threshold markers */}
-        {/* Liquidation threshold (1.0) */}
-        <circle
-          cx="20"
-          cy={config.height - 20}
-          r="4"
-          fill="#EF4444"
-          opacity="0.6"
-        />
-        
-        {/* Warning threshold (1.5) */}
-        <circle
-          cx={config.width / 2}
-          cy="30"
-          r="4"
-          fill="#F59E0B"
-          opacity="0.6"
-        />
-        
-        {/* Safe threshold (3.0) */}
-        <circle
-          cx={config.width - 20}
-          cy={config.height - 20}
-          r="4"
-          fill="#10B981"
-          opacity="0.6"
-        />
-      </svg>
-
-      {/* Center value display */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.5, type: 'spring' }}
-          className={cn('font-bold counter-animate', config.fontSize)}
-          style={{ color }}
-        >
-          {value === Infinity ? '∞' : value.toFixed(2)}
-        </motion.div>
-        
-        {showLabel && (
-          <div className="text-xs text-muted-foreground mt-1">
-            Health Factor
-          </div>
-        )}
-        
-        {/* Status badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="mt-2"
-        >
-          <Badge variant={badgeVariant} className={cn('gap-1', config.badgeSize)}>
-            <StatusIcon className={config.iconSize} />
+  // Compact version for VaultCard
+  if (compact) {
+    return (
+      <div className={cn('space-y-2', className)}>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Health Factor</span>
+          <Badge variant={badgeVariant} className="text-xs">
             {status}
           </Badge>
-        </motion.div>
-      </div>
-
-      {/* Labels */}
-      <div className="flex justify-between text-xs text-muted-foreground mt-2">
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-red-500" />
-          Liquidation
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-amber-500" />
-          Warning
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="h-2 w-2 rounded-full bg-green-500" />
-          Safe
-        </span>
-      </div>
-
-      {/* Liquidation price */}
-      {showLiquidationPrice && liquidationPrice !== undefined && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="text-center mt-3 text-sm"
-        >
-          <span className="text-muted-foreground">Liquidation Price: </span>
-          <span className="font-mono font-semibold text-red-400">
-            ${liquidationPrice.toFixed(2)}
+        </div>
+        
+        <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+            className="h-full rounded-full"
+            style={{ backgroundColor: color }}
+          />
+        </div>
+        
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">
+            {healthFactor === Infinity ? '∞' : healthFactor.toFixed(2)}×
           </span>
-        </motion.div>
-      )}
-    </div>
+          <span className="text-muted-foreground">
+            LTV: {ltv.toFixed(1)}%
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  // Full version for vault detail page
+  return (
+    <Card className={cn('glass', className)}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            Vault Health
+          </CardTitle>
+          <Badge variant={badgeVariant}>
+            {status}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Circular Gauge */}
+        <div className="flex justify-center">
+          <div className="relative">
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              {/* Background circle */}
+              <circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="none"
+                stroke="#ffffff10"
+                strokeWidth="12"
+              />
+              
+              {/* Progress circle */}
+              <motion.circle
+                cx="100"
+                cy="100"
+                r="80"
+                fill="none"
+                stroke={color}
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeDasharray={`${2 * Math.PI * 80}`}
+                strokeDashoffset={`${2 * Math.PI * 80 * (1 - percentage / 100)}`}
+                initial={{ strokeDashoffset: 2 * Math.PI * 80 }}
+                animate={{ strokeDashoffset: 2 * Math.PI * 80 * (1 - percentage / 100) }}
+                transition={{ duration: 1.5, ease: 'easeOut' }}
+                transform="rotate(-90 100 100)"
+                className={glowClass}
+              />
+            </svg>
+            
+            {/* Center value */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <StatusIcon 
+                className="h-8 w-8 mb-2"
+                style={{ color }}
+              />
+              <div className="text-4xl font-bold" style={{ color }}>
+                {healthFactor === Infinity ? '∞' : healthFactor.toFixed(2)}×
+              </div>
+              {showLabel && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Health Factor
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Metrics */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 rounded-lg bg-muted">
+            <div className="text-xs text-muted-foreground mb-1">Current LTV</div>
+            <div className="text-2xl font-bold">
+              {ltv.toFixed(1)}%
+            </div>
+          </div>
+          
+          <div className="p-3 rounded-lg bg-muted">
+            <div className="text-xs text-muted-foreground mb-1">Max LTV</div>
+            <div className="text-2xl font-bold">
+              70.0%
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar with Zones */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Safe Zone</span>
+            <span>Liquidation</span>
+          </div>
+          <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+            {/* Colored zones */}
+            <div className="absolute inset-y-0 left-0 w-[60%] bg-green-500/20" />
+            <div className="absolute inset-y-0 left-[60%] w-[10%] bg-yellow-500/20" />
+            <div className="absolute inset-y-0 left-[70%] w-[10%] bg-orange-500/20" />
+            <div className="absolute inset-y-0 left-[80%] w-[20%] bg-red-500/20" />
+            
+            {/* Current position indicator */}
+            <motion.div
+              initial={{ left: 0 }}
+              animate={{ left: `${Math.min(ltv, 100)}%` }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+              className="absolute inset-y-0 w-1 -ml-0.5"
+              style={{ backgroundColor: color }}
+            >
+              <div 
+                className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent"
+                style={{ borderBottomColor: color }}
+              />
+            </motion.div>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>0%</span>
+            <span className="text-yellow-500">60%</span>
+            <span className="text-orange-500">70%</span>
+            <span className="text-red-500">80%</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        {/* Warning message */}
+        {healthFactor < 1.5 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={cn(
+              'p-4 rounded-lg border flex items-start gap-3',
+              healthFactor < 1.2 ? 'bg-red-500/10 border-red-500/20' : 'bg-yellow-500/10 border-yellow-500/20'
+            )}
+          >
+            <AlertTriangle className={cn(
+              'h-5 w-5 shrink-0 mt-0.5',
+              healthFactor < 1.2 ? 'text-red-500' : 'text-yellow-500'
+            )} />
+            <div className="flex-1">
+              <div className={cn(
+                'font-semibold mb-1',
+                healthFactor < 1.2 ? 'text-red-500' : 'text-yellow-500'
+              )}>
+                {healthFactor < 1.2 ? 'Critical: Immediate Action Required' : 'Warning: Health Declining'}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {healthFactor < 1.2 
+                  ? 'Your vault is at high risk of liquidation. Add collateral or repay debt immediately.'
+                  : 'Consider adding collateral or repaying debt to improve your vault health.'}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

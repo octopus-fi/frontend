@@ -4,10 +4,10 @@
  * Helper functions to read on-chain state
  * 
  * @package @mysten/sui - Sui TypeScript SDK
- * @package @mysten/dapp-kit - For React hooks (useCoreClient)
+ * @package @mysten/dapp-kit - For React hooks (useSuiJsonRpcClient)
  */
 
-import { CoreClient } from '@mysten/sui/client';
+import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
 import { 
   PACKAGE_ID, 
   SHARED_OBJECTS, 
@@ -29,11 +29,11 @@ const { SCALING_FACTOR } = PROTOCOL_PARAMS;
  * 
  * @example
  * ```tsx
- * import { useCoreClient, useCurrentAccount } from '@mysten/dapp-kit';
+ * import { useSuiJsonRpcClient, useCurrentAccount } from '@mysten/dapp-kit';
  * import { getUserVaultId } from './queries';
  * 
  * function VaultInfo() {
- *   const client = useCoreClient();
+ *   const client = useSuiJsonRpcClient();
  *   const account = useCurrentAccount();
  *   const [vaultId, setVaultId] = useState<string | null>(null);
  *   
@@ -48,11 +48,11 @@ const { SCALING_FACTOR } = PROTOCOL_PARAMS;
  * ```
  */
 export async function getUserVaultId(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   userAddress: string
 ): Promise<string | null> {
   // Query user's objects and find their vault
-  const objects = await client.listOwnedObjects({
+  const objects = await client.lis({
     owner: userAddress,
     // filter: {
     //   StructType: `${PACKAGE_ID}::vault_manager::Vault<${COIN_TYPES.OCTSUI}>`,
@@ -71,7 +71,7 @@ export async function getUserVaultId(
  * Get vault state (collateral, debt, reward_reserve)
  */
 export async function getVaultState(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   vaultId: string
 ): Promise<VaultState | null> {
   try {
@@ -100,7 +100,7 @@ export async function getVaultState(
  * Get all vaults owned by user (for multi-collateral support)
  */
 export async function getUserVaults(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   userAddress: string
 ): Promise<Array<{ id: string; type: string }>> {
   const objects = await client.getOwnedObjects({
@@ -127,7 +127,7 @@ export async function getUserVaults(
  * Get user's stake positions
  */
 export async function getUserStakePositions(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   userAddress: string
 ): Promise<string[]> {
   const objects = await client.getOwnedObjects({
@@ -145,7 +145,7 @@ export async function getUserStakePositions(
  * Get stake position state
  */
 export async function getStakePositionState(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   positionId: string
 ): Promise<PositionState | null> {
   try {
@@ -179,7 +179,7 @@ export async function getStakePositionState(
  * Get staking pool statistics
  */
 export async function getPoolStats(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   poolId: string = SHARED_OBJECTS.STAKING_POOL_ID
 ): Promise<PoolStats | null> {
   try {
@@ -214,7 +214,7 @@ export async function getPoolStats(
  * Returns price in USD scaled by 1e9 (e.g., 3.5 USD = 3_500_000_000)
  */
 export async function getOctsuiPrice(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   oracleId: string = SHARED_OBJECTS.ORACLE_ID
 ): Promise<bigint> {
   try {
@@ -249,7 +249,7 @@ export async function getOctsuiPrice(
  * Get price as human-readable number
  */
 export async function getOctsuiPriceUsd(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   oracleId: string = SHARED_OBJECTS.ORACLE_ID
 ): Promise<number> {
   const priceRaw = await getOctsuiPrice(client, oracleId);
@@ -264,7 +264,7 @@ export async function getOctsuiPriceUsd(
  * Get user's coin balances for a specific type
  */
 export async function getUserCoins(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   userAddress: string,
   coinType: string
 ): Promise<Array<{ id: string; balance: bigint }>> {
@@ -283,7 +283,7 @@ export async function getUserCoins(
  * Get user's octSUI balance
  */
 export async function getUserOctsuiBalance(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   userAddress: string
 ): Promise<bigint> {
   const coins = await getUserCoins(client, userAddress, COIN_TYPES.OCTSUI);
@@ -294,7 +294,7 @@ export async function getUserOctsuiBalance(
  * Get user's octUSD balance
  */
 export async function getUserOctusdBalance(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   userAddress: string
 ): Promise<bigint> {
   const coins = await getUserCoins(client, userAddress, COIN_TYPES.OCTUSD);
@@ -305,7 +305,7 @@ export async function getUserOctusdBalance(
  * Get user's MOCKSUI balance
  */
 export async function getUserMocksuiBalance(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   userAddress: string
 ): Promise<bigint> {
   const coins = await getUserCoins(client, userAddress, COIN_TYPES.MOCKSUI);
@@ -320,7 +320,7 @@ export async function getUserMocksuiBalance(
  * Check if AI is authorized for a vault
  */
 export async function isAIAuthorizedForVault(
-  client: CoreClient,
+  client: SuiJsonRpcClient,
   aiAgentAddress: string,
   vaultId: string
 ): Promise<boolean> {

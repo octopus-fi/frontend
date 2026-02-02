@@ -24,6 +24,40 @@ interface VaultStrategy {
   riskScore: number;
 }
 
+export interface VaultState {
+  collateral: bigint;
+  debt: bigint;
+  rewardReserve: bigint;
+}
+
+export interface PositionState {
+  shares: bigint;
+  pendingRewards: bigint;
+  autoRebalanceEnabled: boolean;
+  linkedVaultId?: string;
+}
+
+export interface PoolStats {
+  totalShares: bigint;
+  totalRewards: bigint;
+  rewardRateBps: number;
+  totalStaked: bigint;
+}
+
+export interface LiquidationStatus {
+  isLiquidatable: boolean;
+  healthFactor: number;
+  currentLtvBps: number;
+  debt: bigint;
+  collateral: bigint;
+  collateralValue: bigint;
+}
+
+export interface HealthStatus {
+  level: 'safe' | 'warning' | 'danger' | 'liquidatable';
+  color: string;
+  label: string;
+}
 // Strategy Marketplace Types
 interface Strategy {
   id: string;

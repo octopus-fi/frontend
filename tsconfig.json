@@ -25,7 +25,8 @@
       "@/config/*": ["./config/*"],
       "@/store/*": ["./store/*"],
       "@/hooks/*": ["./hooks/*"],
-      "@/providers/*": ["./providers/*"]
+      "@/providers/*": ["./providers/*"],
+      "@/sdk/*": ["./sdk/*"]
     }
   },
   "include": [

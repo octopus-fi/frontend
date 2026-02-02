@@ -14,7 +14,7 @@ export function calculateHealthFactor(
   
   if (debtValue === 0) return Infinity;
   
-  const health = (collateralValue * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD) / debtValue;
+  const health = (collateralValue * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS) / debtValue;
   return Math.max(0, health);
 }
 
@@ -40,7 +40,7 @@ export function calculateMaxBorrow(
   price: number
 ): number {
   const collateralValue = Number(collateral) * price;
-  return collateralValue * PROTOCOL_PARAMS.MAX_LTV;
+  return collateralValue * PROTOCOL_PARAMS.MAX_LTV_BPS;
 }
 
 /**
@@ -53,7 +53,7 @@ export function calculateLiquidationPrice(
 ): number {
   if (Number(collateral) === 0) return 0;
   
-  return Number(debt) / (Number(collateral) * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD);
+  return Number(debt) / (Number(collateral) * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS);
 }
 
 /**
@@ -62,12 +62,12 @@ export function calculateLiquidationPrice(
 export function calculateMinCollateral(
   debt: number | bigint,
   price: number,
-  targetHealth: number = PROTOCOL_PARAMS.AI_REBALANCE_THRESHOLD
+  targetHealth: number = PROTOCOL_PARAMS.AI_REBALANCE_THRESHOL
 ): number {
   const debtValue = Number(debt);
   if (debtValue === 0) return 0;
   
-  return (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD);
+  return (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS);
 }
 
 /**
@@ -121,7 +121,7 @@ export function calculateRepayAmount(
   
   if (targetHealth >= Infinity) return currentDebt;
   
-  const targetDebt = (collateralValue * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD) / targetHealth;
+  const targetDebt = (collateralValue * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS) / targetHealth;
   const repayAmount = currentDebt - targetDebt;
   
   return Math.max(0, Math.min(repayAmount, currentDebt));
@@ -141,7 +141,7 @@ export function calculateAddCollateralAmount(
   
   if (debtValue === 0) return 0;
   
-  const targetCollateral = (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD);
+  const targetCollateral = (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS);
   const addAmount = targetCollateral - currentCollateral;
   
   return Math.max(0, addAmount);
@@ -222,7 +222,7 @@ export function validateVaultParams(
   if (borrowAmount > maxBorrow) {
     return { 
       valid: false, 
-      error: `Maximum borrow amount is ${maxBorrow.toFixed(2)} octUSD (${PROTOCOL_PARAMS.MAX_LTV * 100}% LTV)` 
+      error: `Maximum borrow amount is ${maxBorrow.toFixed(2)} octUSD (${PROTOCOL_PARAMS.MAX_LTV_BPS * 100}% LTV)` 
     };
   }
   
@@ -230,7 +230,7 @@ export function validateVaultParams(
   if (borrowAmount > 0) {
     const health = calculateHealthFactor(collateral, borrowAmount, price);
     
-    if (health < PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD) {
+    if (health < PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS) {
       return { valid: false, error: 'Health factor too low. Vault would be immediately liquidated.' };
     }
     
