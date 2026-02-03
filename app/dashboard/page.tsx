@@ -63,76 +63,96 @@ export default function DashboardPage() {
   // Show create vault prompt if no vault exists
   if (!vaultId) {
     return (
-      <div className="space-y-8 animate-fade-in">
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold mb-2"
-          >
-            Welcome to Octopus Finance 👋
-          </motion.h1>
-          <p className="text-muted-foreground text-lg">
-            Get started by creating your first vault
-          </p>
-        </div>
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar */}
+        <Sidebar />
 
-        <Card className="glass border-primary/20 max-w-2xl mx-auto">
-          <CardContent className="p-12 text-center">
-            <Shield className="h-16 w-16 text-primary mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-2">Create Your First Vault</h3>
-            <p className="text-muted-foreground mb-6">
-              Create a vault to start depositing collateral and borrowing octUSD
-            </p>
-            <Button variant="electric" size="lg" asChild>
-              <Link href="/borrow" className="gap-2">
-                Create Vault
-                <ArrowRight className="h-5 w-5" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Main Content Area */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Header */}
+          <Header />
 
-        {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          <Card className="glass">
-            <CardContent className="p-6 text-center">
-              <Wallet className="h-12 w-12 text-cyan-500 mx-auto mb-4" />
-              <h4 className="font-semibold mb-2">Stake SUI</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Stake SUI to receive octSUI with ~{netAPY.toFixed(1)}% APY
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard/stake">Stake Now</Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Main Content */}
+          <main className="flex-1 overflow-y-auto bg-background">
+            <div className="container mx-auto p-6">
+              <div className="space-y-8 animate-fade-in">
+                <div>
+                  <motion.h1
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-4xl font-bold mb-2"
+                  >
+                    Welcome to Octopus Finance 👋
+                  </motion.h1>
+                  <p className="text-muted-foreground text-lg">
+                    Get started by creating your first vault
+                  </p>
+                </div>
 
-          <Card className="glass">
-            <CardContent className="p-6 text-center">
-              <Zap className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-              <h4 className="font-semibold mb-2">Browse Strategies</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Explore AI-powered vault strategies
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard/strategies">Explore</Link>
-              </Button>
-            </CardContent>
-          </Card>
+                <Card className="glass border-primary/20 max-w-2xl mx-auto">
+                  <CardContent className="p-12 text-center">
+                    <Shield className="h-16 w-16 text-primary mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold mb-2">
+                      Create Your First Vault
+                    </h3>
+                    <p className="text-muted-foreground mb-6">
+                      Create a vault to start depositing collateral and
+                      borrowing octUSD
+                    </p>
+                    <Button variant="electric" size="lg" asChild>
+                      <Link href="/borrow" className="gap-2">
+                        Create Vault
+                        <ArrowRight className="h-5 w-5" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
 
-          <Card className="glass">
-            <CardContent className="p-6 text-center">
-              <Activity className="h-12 w-12 text-green-500 mx-auto mb-4" />
-              <h4 className="font-semibold mb-2">View Analytics</h4>
-              <p className="text-sm text-muted-foreground mb-4">
-                Track your portfolio performance
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard/analytics">View Analytics</Link>
-              </Button>
-            </CardContent>
-          </Card>
+                {/* Quick Actions */}
+                <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+                  <Card className="glass">
+                    <CardContent className="p-6 text-center">
+                      <Wallet className="h-12 w-12 text-cyan-500 mx-auto mb-4" />
+                      <h4 className="font-semibold mb-2">Stake SUI</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Stake SUI to receive octSUI with ~{netAPY.toFixed(1)}%
+                        APY
+                      </p>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/dashboard/stake">Stake Now</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="glass">
+                    <CardContent className="p-6 text-center">
+                      <Zap className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+                      <h4 className="font-semibold mb-2">Browse Strategies</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Explore AI-powered vault strategies
+                      </p>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/dashboard/strategies">Explore</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="glass">
+                    <CardContent className="p-6 text-center">
+                      <Activity className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                      <h4 className="font-semibold mb-2">View Analytics</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Track your portfolio performance
+                      </p>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href="/dashboard/analytics">View Analytics</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </main>
         </div>
       </div>
     );

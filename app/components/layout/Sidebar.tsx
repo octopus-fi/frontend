@@ -41,35 +41,35 @@ export function Sidebar() {
     },
     {
       name: 'Stake',
-      href: '/dashboard/stake',
+      href: '/stake',
       icon: Waves,
       badge: `~${formatPercent(estimatedApy / 100)}`,
     },
     {
       name: 'Borrow',
-      href: '/dashboard/borrow',
+      href: '/borrow',
       icon: Coins,
     },
     {
       name: 'Strategies',
-      href: '/dashboard/strategies',
+      href: '/strategies',
       icon: Store,
       badge: 'New',
       badgeVariant: 'electric' as const,
     },
     {
       name: 'AI Chat',
-      href: '/dashboard/chat',
+      href: '/chat',
       icon: MessageSquare,
     },
     {
       name: 'Analytics',
-      href: '/dashboard/analytics',
+      href: '/analytics',
       icon: TrendingUp,
     },
     {
       name: 'Liquidate',
-      href: '/dashboard/liquidate',
+      href: '/liquidate',
       icon: Zap,
     },
   ];
@@ -77,7 +77,7 @@ export function Sidebar() {
   const bottomNavigation = [
     {
       name: 'Settings',
-      href: '/dashboard/settings',
+      href: '/settings',
       icon: Settings,
     },
     {
@@ -126,7 +126,7 @@ export function Sidebar() {
         {/* Logo */}
         <div className="p-6 border-b border-primary/10">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg group-hover:shadow-primary/50 transition-shadow">
+            <div className="h-10 w-10 rounded-xl gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg group-hover:shadow-primary/50 transition-shadow">
               <Activity className="h-6 w-6 text-white" />
             </div>
             <div>
@@ -144,11 +144,10 @@ export function Sidebar() {
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={() => setSidebarOpen(false)}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg transition-all group',
                   'hover:bg-white/5 hover:shadow-md',
-                  isActive && 'bg-gradient-to-r from-primary/20 to-secondary/20 shadow-lg border border-primary/20'
+                  isActive && 'gradient-to-r from-primary/20 to-secondary/20 shadow-lg border border-primary/20'
                 )}
               >
                 <item.icon
