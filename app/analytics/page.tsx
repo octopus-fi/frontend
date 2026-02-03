@@ -16,40 +16,56 @@ import {
   Calendar,
   Shield,
   Zap,
+  TrendingDown,
 } from "lucide-react";
 import { formatCurrency, formatPercent } from "@/lib/utils";
-import { Header } from "@/components/layout/Header";
+import { useDashboard, formatAmount } from "@/sdk/index";
 import { Sidebar } from "@/components/layout/Sidebar";
-
-// Mock portfolio data
-const portfolioData = {
-  totalValue: 125420,
-  change24h: 3.24,
-  change7d: 8.15,
-  change30d: 14.32,
-  currentAPY: 14.2,
-  totalEarned: 18420,
-  totalDeposited: 107000,
-  totalCollateral: 85000,
-  totalBorrowed: 48000,
-  vaults: [
-    { id: "1", health: 2.1, ltv: 60 },
-    { id: "2", health: 1.8, ltv: 64 },
-    { id: "3", health: 1.15, ltv: 70 },
-  ],
-};
+import { Header } from "@/components/layout/Header";
 
 export default function AnalyticsPage() {
   const {
-    totalValue,
-    change24h,
-    change7d,
-    change30d,
-    currentAPY,
-    totalEarned,
-    totalDeposited,
-    vaults,
-  } = portfolioData;
+    collateral,
+    debt,
+    ltv,
+    healthFactor,
+    healthStatus,
+    octsuiPrice,
+    estimatedApy,
+    octsuiBalance,
+    octusdBalance,
+    mocksuiBalance,
+    isLoading,
+  } = useDashboard();
+
+  // Calculate portfolio metrics
+  const collateralValue =
+    octsuiPrice > 0 ? (Number(collateral) / 1e9) * octsuiPrice : 0;
+  const debtValue = Number(debt) / 1e9;
+  const totalValue = collateralValue;
+  const netWorth = collateralValue - debtValue;
+
+  // Additional balances in USD
+  const octsuiBalanceValue = (Number(octsuiBalance) / 1e9) * octsuiPrice;
+  const mocksuiBalanceValue = (Number(mocksuiBalance) / 1e9) * octsuiPrice; // Assume same price
+  const octusdBalanceValue = Number(octusdBalance) / 1e9;
+
+  const totalPortfolioValue =
+    collateralValue +
+    octsuiBalanceValue +
+    mocksuiBalanceValue +
+    octusdBalanceValue;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading analytics...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -66,7 +82,7 @@ export default function AnalyticsPage() {
           <div className="container mx-auto p-6">
             <div className="space-y-8 animate-fade-in">
               {/* Page Header */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-4">
                 <div>
                   <motion.h1
                     initial={{ opacity: 0, y: -20 }}
@@ -76,18 +92,18 @@ export default function AnalyticsPage() {
                     Analytics Dashboard
                   </motion.h1>
                   <p className="text-muted-foreground text-lg">
-                    Deep insights into your portfolio performance
+                    Real-time insights into your portfolio performance
                   </p>
                 </div>
 
                 <div className="flex gap-3">
                   <Button variant="outline" className="gap-2">
                     <Calendar className="h-4 w-4" />
-                    Custom Range
+                    Time Range
                   </Button>
                   <Button variant="electric" className="gap-2">
                     <Download className="h-4 w-4" />
-                    Export Report
+                    Export
                   </Button>
                 </div>
               </div>
@@ -109,23 +125,11 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold counter-animate">
-                        {formatCurrency(totalValue)}
+                        {formatCurrency(totalPortfolioValue)}
                       </div>
-                      <div className="flex items-center gap-2 text-xs mt-2">
-                        <Badge
-                          variant={change24h >= 0 ? "success" : "danger"}
-                          className="gap-1"
-                        >
-                          {change24h >= 0 ? (
-                            <TrendingUp className="h-3 w-3" />
-                          ) : (
-                            "↓"
-                          )}
-                          {change24h >= 0 ? "+" : ""}
-                          {formatPercent(change24h / 100)}
-                        </Badge>
-                        <span className="text-muted-foreground">24h</span>
-                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Across all assets
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -138,19 +142,17 @@ export default function AnalyticsPage() {
                   <Card className="glass border-primary/20">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
-                        Current APY
+                        Net Worth
                       </CardTitle>
-                      <Percent className="h-4 w-4 text-green-500" />
+                      <TrendingUp className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-3xl font-bold text-green-500">
-                        {formatPercent(currentAPY / 100)}
+                      <div className="text-3xl font-bold">
+                        {formatCurrency(netWorth)}
                       </div>
-                      <div className="flex items-center gap-2 text-xs mt-2">
-                        <span className="text-muted-foreground">
-                          Staking + Leverage
-                        </span>
-                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Assets - Liabilities
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -163,22 +165,17 @@ export default function AnalyticsPage() {
                   <Card className="glass border-primary/20">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
-                        Total Earned
+                        Est. APY
                       </CardTitle>
-                      <TrendingUp className="h-4 w-4 text-primary" />
+                      <Percent className="h-4 w-4 text-amber-500" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-3xl font-bold text-primary">
-                        {formatCurrency(totalEarned)}
+                      <div className="text-3xl font-bold text-green-500">
+                        {formatPercent(estimatedApy / 100)}
                       </div>
-                      <div className="flex items-center gap-2 text-xs mt-2">
-                        <span className="text-muted-foreground">
-                          {formatPercent(
-                            ((totalEarned / totalDeposited) * 100) / 100,
-                          )}{" "}
-                          ROI
-                        </span>
-                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        From staking
+                      </p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -191,339 +188,259 @@ export default function AnalyticsPage() {
                   <Card className="glass border-primary/20">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
-                        30-Day Change
+                        Health Factor
                       </CardTitle>
-                      <Activity className="h-4 w-4 text-cyan-500" />
+                      <Shield className="h-4 w-4 text-cyan-500" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-3xl font-bold text-green-500">
-                        +{formatPercent(change30d / 100)}
+                      <div className="text-3xl font-bold">
+                        {healthFactor === Infinity
+                          ? "∞"
+                          : healthFactor.toFixed(2)}
+                        ×
                       </div>
-                      <div className="flex items-center gap-2 text-xs mt-2">
-                        <span className="text-muted-foreground">
-                          7d: +{formatPercent(change7d / 100)}
-                        </span>
-                      </div>
+                      <Badge
+                        variant={
+                          healthStatus === "safe"
+                            ? "success"
+                            : healthStatus === "warning"
+                              ? "warning"
+                              : "danger"
+                        }
+                        className="mt-2"
+                      >
+                        {healthStatus}
+                      </Badge>
                     </CardContent>
                   </Card>
                 </motion.div>
               </div>
 
-              {/* Main Content Grid */}
+              {/* Charts Row */}
+              <div className="grid lg:grid-cols-2 gap-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <PortfolioPerformanceChart />
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  {/* <APYProjectionChart currentAPY={estimatedApy} /> */}
+                </motion.div>
+              </div>
+
+              {/* Detailed Metrics */}
               <div className="grid lg:grid-cols-3 gap-6">
-                {/* Left Column - Charts */}
-                <div className="lg:col-span-2 space-y-6">
-                  {/* Portfolio Performance */}
-                  <PortfolioPerformanceChart initialValue={totalDeposited} />
-
-                  {/* APY Projection */}
-                  <APYProjectionChart
-                    currentValue={totalValue}
-                    currentAPY={currentAPY}
-                    projectionMonths={12}
-                  />
-
-                  {/* Performance Breakdown */}
-                  <Card className="glass border-primary/20">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="lg:col-span-2"
+                >
+                  <Card className="glass">
                     <CardHeader>
-                      <CardTitle>Performance Breakdown</CardTitle>
+                      <CardTitle>Asset Breakdown</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
-                        {/* Staking Rewards */}
-                        <div className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-white/10">
+                        {/* Vault Collateral */}
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-                              <Zap className="h-5 w-5 text-green-500" />
+                            <div className="h-10 w-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                              <Shield className="h-5 w-5 text-cyan-500" />
                             </div>
                             <div>
-                              <div className="font-medium">Staking Rewards</div>
+                              <div className="font-semibold">
+                                Vault Collateral
+                              </div>
                               <div className="text-sm text-muted-foreground">
-                                octSUI yield
+                                {formatAmount(collateral)} octSUI
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-xl font-bold text-green-500">
-                              {formatCurrency(totalEarned * 0.6)}
+                            <div className="font-semibold">
+                              {formatCurrency(collateralValue)}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              ~7.2% APY
+                              {(
+                                (collateralValue / totalPortfolioValue) *
+                                100
+                              ).toFixed(1)}
+                              %
                             </div>
                           </div>
                         </div>
 
-                        {/* Leverage Gains */}
-                        <div className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-white/10">
+                        {/* Wallet octSUI */}
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <TrendingUp className="h-5 w-5 text-primary" />
+                            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+                              <Activity className="h-5 w-5 text-primary" />
                             </div>
                             <div>
-                              <div className="font-medium">
-                                Leverage Multiplier
-                              </div>
+                              <div className="font-semibold">Wallet octSUI</div>
                               <div className="text-sm text-muted-foreground">
-                                Borrowing gains
+                                {formatAmount(octsuiBalance)} octSUI
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-xl font-bold text-primary">
-                              {formatCurrency(totalEarned * 0.4)}
+                            <div className="font-semibold">
+                              {formatCurrency(octsuiBalanceValue)}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              +7.0% bonus
+                              {(
+                                (octsuiBalanceValue / totalPortfolioValue) *
+                                100
+                              ).toFixed(1)}
+                              %
                             </div>
                           </div>
                         </div>
 
-                        {/* Total */}
-                        <div className="flex items-center justify-between p-4 rounded-lg bg-primary/5 border border-primary/20">
-                          <div className="font-semibold">Total Earnings</div>
-                          <div className="text-2xl font-bold text-primary">
-                            {formatCurrency(totalEarned)}
+                        {/* MOCKSUI */}
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                              <Zap className="h-5 w-5 text-blue-500" />
+                            </div>
+                            <div>
+                              <div className="font-semibold">MOCKSUI</div>
+                              <div className="text-sm text-muted-foreground">
+                                {formatAmount(mocksuiBalance)} MOCKSUI
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">
+                              {formatCurrency(mocksuiBalanceValue)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {(
+                                (mocksuiBalanceValue / totalPortfolioValue) *
+                                100
+                              ).toFixed(1)}
+                              %
+                            </div>
                           </div>
                         </div>
+
+                        {/* octUSD */}
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                              <DollarSign className="h-5 w-5 text-green-500" />
+                            </div>
+                            <div>
+                              <div className="font-semibold">octUSD</div>
+                              <div className="text-sm text-muted-foreground">
+                                {formatAmount(octusdBalance)} octUSD
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">
+                              {formatCurrency(octusdBalanceValue)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {(
+                                (octusdBalanceValue / totalPortfolioValue) *
+                                100
+                              ).toFixed(1)}
+                              %
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Debt */}
+                        {Number(debt) > 0 && (
+                          <div className="flex items-center justify-between p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                                <TrendingDown className="h-5 w-5 text-red-500" />
+                              </div>
+                              <div>
+                                <div className="font-semibold text-red-500">
+                                  Borrowed Debt
+                                </div>
+                                <div className="text-sm text-red-500/70">
+                                  {formatAmount(debt)} octUSD
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-red-500">
+                                -{formatCurrency(debtValue)}
+                              </div>
+                              <div className="text-sm text-red-500/70">
+                                LTV: {ltv.toFixed(1)}%
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                </motion.div>
 
-                {/* Right Column - Risk & Stats */}
-                <div className="space-y-6">
-                  {/* Risk Metrics */}
-                  <RiskMetrics vaults={vaults} />
-
-                  {/* Quick Stats */}
-                  <Card className="glass border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        Portfolio Summary
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Total Deposited:
-                        </span>
-                        <span className="font-mono font-semibold">
-                          {formatCurrency(totalDeposited)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Total Earned:
-                        </span>
-                        <span className="font-mono font-semibold text-green-500">
-                          +{formatCurrency(totalEarned)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between pt-2 border-t border-white/10">
-                        <span className="text-muted-foreground">
-                          Current Value:
-                        </span>
-                        <span className="font-mono font-semibold text-primary">
-                          {formatCurrency(totalValue)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">ROI:</span>
-                        <span className="font-mono font-semibold text-green-500">
-                          +
-                          {formatPercent(
-                            ((totalEarned / totalDeposited) * 100) / 100,
-                          )}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Asset Allocation */}
-                  <Card className="glass border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        Asset Allocation
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Collateral */}
-                      <div>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-muted-foreground">
-                            Collateral (octSUI)
-                          </span>
-                          <span className="font-semibold">
-                            {formatCurrency(portfolioData.totalCollateral)}
-                          </span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full gradient-to-r from-green-500 to-emerald-500"
-                            style={{
-                              width: `${(portfolioData.totalCollateral / totalValue) * 100}%`,
-                            }}
-                          />
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {(
-                            (portfolioData.totalCollateral / totalValue) *
-                            100
-                          ).toFixed(1)}
-                          % of portfolio
-                        </div>
-                      </div>
-
-                      {/* Borrowed */}
-                      <div>
-                        <div className="flex justify-between text-sm mb-2">
-                          <span className="text-muted-foreground">
-                            Borrowed (octUSD)
-                          </span>
-                          <span className="font-semibold">
-                            {formatCurrency(portfolioData.totalBorrowed)}
-                          </span>
-                        </div>
-                        <div className="h-2 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full gradient-to-r from-amber-500 to-orange-500"
-                            style={{
-                              width: `${(portfolioData.totalBorrowed / totalValue) * 100}%`,
-                            }}
-                          />
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          {(
-                            (portfolioData.totalBorrowed / totalValue) *
-                            100
-                          ).toFixed(1)}
-                          % of portfolio
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Time-based Stats */}
-                  <Card className="glass border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        Performance Timeline
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-white/10">
-                        <div>
-                          <div className="text-xs text-muted-foreground">
-                            24 Hours
-                          </div>
-                          <div
-                            className={`text-sm font-bold ${change24h >= 0 ? "text-green-500" : "text-red-500"}`}
-                          >
-                            {change24h >= 0 ? "+" : ""}
-                            {formatPercent(change24h / 100)}
-                          </div>
-                        </div>
-                        <Badge variant={change24h >= 0 ? "success" : "danger"}>
-                          {change24h >= 0 ? "↑" : "↓"}
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-white/10">
-                        <div>
-                          <div className="text-xs text-muted-foreground">
-                            7 Days
-                          </div>
-                          <div
-                            className={`text-sm font-bold ${change7d >= 0 ? "text-green-500" : "text-red-500"}`}
-                          >
-                            {change7d >= 0 ? "+" : ""}
-                            {formatPercent(change7d / 100)}
-                          </div>
-                        </div>
-                        <Badge variant={change7d >= 0 ? "success" : "danger"}>
-                          {change7d >= 0 ? "↑" : "↓"}
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-white/10">
-                        <div>
-                          <div className="text-xs text-muted-foreground">
-                            30 Days
-                          </div>
-                          <div
-                            className={`text-sm font-bold ${change30d >= 0 ? "text-green-500" : "text-red-500"}`}
-                          >
-                            {change30d >= 0 ? "+" : ""}
-                            {formatPercent(change30d / 100)}
-                          </div>
-                        </div>
-                        <Badge variant={change30d >= 0 ? "success" : "danger"}>
-                          {change30d >= 0 ? "↑" : "↓"}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <RiskMetrics
+                    ltv={ltv}
+                    healthFactor={healthFactor}
+                    healthStatus={healthStatus}
+                  />
+                </motion.div>
               </div>
 
-              {/* Bottom Info Section */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card className="glass border-primary/20">
+              {/* Market Info */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9 }}
+              >
+                <Card className="glass">
                   <CardHeader>
-                    <CardTitle className="text-base">
-                      About Your Analytics
-                    </CardTitle>
+                    <CardTitle>Market Prices</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3 text-sm text-muted-foreground">
-                    <p>
-                      Your analytics dashboard provides real-time insights into
-                      your portfolio performance, including historical trends,
-                      risk metrics, and future projections.
-                    </p>
-                    <div className="space-y-2 pt-2">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-primary" />
-                        <span>Risk analysis updated every 5 minutes</span>
+                  <CardContent>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="p-4 rounded-lg bg-muted">
+                        <div className="text-sm text-muted-foreground mb-1">
+                          octSUI Price
+                        </div>
+                        <div className="text-2xl font-bold">
+                          {formatCurrency(octsuiPrice)}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Activity className="h-4 w-4 text-primary" />
-                        <span>Performance tracked in real-time</span>
+                      <div className="p-4 rounded-lg bg-muted">
+                        <div className="text-sm text-muted-foreground mb-1">
+                          octUSD Price
+                        </div>
+                        <div className="text-2xl font-bold">$1.00</div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-primary" />
-                        <span>APY projections based on current rates</span>
+                      <div className="p-4 rounded-lg bg-muted">
+                        <div className="text-sm text-muted-foreground mb-1">
+                          Staking APY
+                        </div>
+                        <div className="text-2xl font-bold text-green-500">
+                          {formatPercent(estimatedApy / 100)}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-
-                <Card className="glass border-primary/20 bg-primary/5">
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Zap className="h-5 w-5 text-primary" />
-                      Optimization Tips
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <div className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Maintain health factors above 1.5× for safety</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Enable AI auto-rebalance on all vaults</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Diversify with multiple strategies</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      <span>Compound rewards weekly for maximum gains</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              </motion.div>
             </div>
           </div>
         </main>

@@ -23,7 +23,10 @@
       "@/lib/*": ["./lib/*"],
       "@/types/*": ["./types/"],
       "@/config/*": ["./config/*"],
-      "@/store/*": ["./store/*"]
+      "@/store/*": ["./store/*"],
+      "@/hooks/*": ["./hooks/*"],
+      "@/providers/*": ["./providers/*"],
+      "@/sdk/*": ["./sdk/*"]
     }
   },
   "include": [

@@ -14,7 +14,7 @@ export function calculateHealthFactor(
   
   if (debtValue === 0) return Infinity;
   
-  const health = (collateralValue * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD) / debtValue;
+  const health = (collateralValue * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS) / debtValue;
   return Math.max(0, health);
 }
 
@@ -40,7 +40,7 @@ export function calculateMaxBorrow(
   price: number
 ): number {
   const collateralValue = Number(collateral) * price;
-  return collateralValue * PROTOCOL_PARAMS.MAX_LTV;
+  return collateralValue * PROTOCOL_PARAMS.MAX_LTV_BPS;
 }
 
 /**
@@ -53,22 +53,22 @@ export function calculateLiquidationPrice(
 ): number {
   if (Number(collateral) === 0) return 0;
   
-  return Number(debt) / (Number(collateral) * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD);
+  return Number(debt) / (Number(collateral) * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS);
 }
 
 /**
  * Calculate minimum collateral needed for target health
  */
-export function calculateMinCollateral(
-  debt: number | bigint,
-  price: number,
-  targetHealth: number = PROTOCOL_PARAMS.AI_REBALANCE_THRESHOLD
-): number {
-  const debtValue = Number(debt);
-  if (debtValue === 0) return 0;
+// export function calculateMinCollateral(
+//   debt: number | bigint,
+//   price: number,
+//   targetHealth: number = PROTOCOL_PARAMS.AI_REBALANCE_THRESHOL
+// ): number {
+//   const debtValue = Number(debt);
+//   if (debtValue === 0) return 0;
   
-  return (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD);
-}
+//   return (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS);
+// }
 
 /**
  * Calculate how much more can be borrowed
@@ -86,17 +86,17 @@ export function calculateAvailableBorrow(
 /**
  * Calculate APY including staking rewards and leverage
  */
-export function calculateNetAPY(
-  collateral: number | bigint,
-  debt: number | bigint,
-  stakingAPY: number = PROTOCOL_PARAMS.STAKING_APY
-): number {
-  const collateralValue = Number(collateral);
-  if (collateralValue === 0) return stakingAPY * 100;
+// export function calculateNetAPY(
+//   collateral: number | bigint,
+//   debt: number | bigint,
+//   stakingAPY: number = PROTOCOL_PARAMS.STAKING_APY
+// ): number {
+//   const collateralValue = Number(collateral);
+//   if (collateralValue === 0) return stakingAPY * 100;
   
-  const leverage = (collateralValue + Number(debt)) / collateralValue;
-  return stakingAPY * leverage * 100;
-}
+//   const leverage = (collateralValue + Number(debt)) / collateralValue;
+//   return stakingAPY * leverage * 100;
+// }
 
 /**
  * Calculate risk level based on health factor
@@ -121,7 +121,7 @@ export function calculateRepayAmount(
   
   if (targetHealth >= Infinity) return currentDebt;
   
-  const targetDebt = (collateralValue * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD) / targetHealth;
+  const targetDebt = (collateralValue * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS) / targetHealth;
   const repayAmount = currentDebt - targetDebt;
   
   return Math.max(0, Math.min(repayAmount, currentDebt));
@@ -141,7 +141,7 @@ export function calculateAddCollateralAmount(
   
   if (debtValue === 0) return 0;
   
-  const targetCollateral = (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD);
+  const targetCollateral = (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS);
   const addAmount = targetCollateral - currentCollateral;
   
   return Math.max(0, addAmount);
@@ -166,28 +166,28 @@ export function estimateGasCost(
 /**
  * Calculate projected earnings
  */
-export function calculateProjectedEarnings(
-  collateral: number | bigint,
-  debt: number | bigint,
-  days: number = 30
-): {
-  stakingRewards: number;
-  borrowCost: number;
-  netEarnings: number;
-} {
-  const collateralValue = Number(collateral);
-  // const debtValue = Number(debt);
+// export function calculateProjectedEarnings(
+//   collateral: number | bigint,
+//   debt: number | bigint,
+//   days: number = 30
+// ): {
+//   stakingRewards: number;
+//   borrowCost: number;
+//   netEarnings: number;
+// } {
+//   const collateralValue = Number(collateral);
+//   // const debtValue = Number(debt);
   
-  const stakingRewards = (collateralValue * PROTOCOL_PARAMS.STAKING_APY * days) / 365;
-  const borrowCost = 0; // 0% interest
-  const netEarnings = stakingRewards - borrowCost;
+//   const stakingRewards = (collateralValue * PROTOCOL_PARAMS.STAKING_APY * days) / 365;
+//   const borrowCost = 0; // 0% interest
+//   const netEarnings = stakingRewards - borrowCost;
   
-  return {
-    stakingRewards,
-    borrowCost,
-    netEarnings,
-  };
-}
+//   return {
+//     stakingRewards,
+//     borrowCost,
+//     netEarnings,
+//   };
+// }
 
 /**
  * Validate vault parameters
@@ -222,7 +222,7 @@ export function validateVaultParams(
   if (borrowAmount > maxBorrow) {
     return { 
       valid: false, 
-      error: `Maximum borrow amount is ${maxBorrow.toFixed(2)} octUSD (${PROTOCOL_PARAMS.MAX_LTV * 100}% LTV)` 
+      error: `Maximum borrow amount is ${maxBorrow.toFixed(2)} octUSD (${PROTOCOL_PARAMS.MAX_LTV_BPS * 100}% LTV)` 
     };
   }
   
@@ -230,7 +230,7 @@ export function validateVaultParams(
   if (borrowAmount > 0) {
     const health = calculateHealthFactor(collateral, borrowAmount, price);
     
-    if (health < PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD) {
+    if (health < PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS) {
       return { valid: false, error: 'Health factor too low. Vault would be immediately liquidated.' };
     }
     

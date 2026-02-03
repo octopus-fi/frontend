@@ -1,274 +1,345 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { HealthFactorGauge } from '@/components/vault/HealthFactorGauge';
-import {
-  DollarSign,
-  AlertTriangle,
+import { 
+  useBorrowPreview,
+  parseAmount,
+  formatAmount,
+  getUserCoins,
+  COIN_TYPES,
+  buildDepositCollateralWithAmountTransaction,
+  buildBorrowTransaction,
+} from '@/sdk/index';
+import { useSignAndExecuteTransaction, useSuiClient, useCurrentAccount } from '@mysten/dapp-kit';
+import { useUIStore } from '@/store/ui-store';
+import { useQueryClient } from '@tanstack/react-query';
+import { formatCurrency } from '@/lib/utils';
+import { 
+  TrendingUp, 
+  AlertCircle, 
   Info,
   ArrowDown,
+  CheckCircle2,
 } from 'lucide-react';
-import {
-  calculateHealthFactor,
-  calculateLTV,
-  calculateAvailableBorrow,
-  calculateLiquidationPrice,
-  validateVaultParams,
-} from '@/lib/calculations/vault';
-import { formatCurrency, cn } from '@/lib/utils';
-import type { Vault } from '@/types/index';
 
 interface BorrowFormProps {
-  vault: Vault;
-  onSuccess?: () => void;
+  vaultId: string;
+  currentCollateral: bigint;
+  currentDebt: bigint;
+  maxBorrow: number;
+  availableBorrow: number;
+  octsuiBalance: bigint;
 }
 
-const MOCK_PRICE = 3.0;
-
-export function BorrowForm({ vault, onSuccess }: BorrowFormProps) {
+export function BorrowForm({ 
+  vaultId, 
+  currentCollateral, 
+  currentDebt,
+  maxBorrow,
+  availableBorrow,
+  octsuiBalance,
+}: BorrowFormProps) {
+  const [depositAmount, setDepositAmount] = useState('');
   const [borrowAmount, setBorrowAmount] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState<'input' | 'confirm' | 'processing'>('input');
 
-  const borrowNum = parseFloat(borrowAmount) || 0;
-  const currentCollateral = Number(vault.collateral) / 1e9;
-  const currentDebt = Number(vault.debt) / 1e6;
-  const newDebt = currentDebt + borrowNum;
+  const { mutate: signAndExecute, isPending } = useSignAndExecuteTransaction();
+  const client = useSuiClient();
+  const account = useCurrentAccount();
+  const { addNotification } = useUIStore();
+  const queryClient = useQueryClient();
 
-  // Calculate new metrics
-  const newHealth = calculateHealthFactor(currentCollateral, newDebt, MOCK_PRICE);
-  const newLTV = calculateLTV(currentCollateral, newDebt, MOCK_PRICE);
-  const newLiqPrice = calculateLiquidationPrice(currentCollateral, newDebt);
-  const availableBorrow = calculateAvailableBorrow(currentCollateral, currentDebt, MOCK_PRICE);
-  
-  const validation = validateVaultParams(currentCollateral, newDebt, MOCK_PRICE);
+  // Real-time preview
+  const preview = useBorrowPreview(
+    parseFloat(depositAmount) || 0,
+    parseFloat(borrowAmount) || 0
+  );
+
+  const handleMaxDeposit = () => {
+    const maxAmount = Number(octsuiBalance) / 1e9;
+    setDepositAmount(maxAmount.toString());
+  };
+
+  const handleMaxBorrow = () => {
+    if (preview) {
+      setBorrowAmount(preview.availableToBorrowUsd.toString());
+    }
+  };
 
   const handleBorrow = async () => {
-    if (!validation.valid) return;
-    
-    setIsSubmitting(true);
-    // Simulate transaction
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsSubmitting(false);
-    setBorrowAmount('');
-    onSuccess?.();
+    if (!account || !preview?.canBorrow) return;
+
+    setStep('processing');
+
+    try {
+      // Step 1: Deposit collateral if needed
+      if (depositAmount && parseFloat(depositAmount) > 0) {
+        const coins = await getUserCoins(client, account.address, COIN_TYPES.OCTSUI);
+        if (coins.length === 0) {
+          addNotification({
+            type: 'error',
+            title: 'No octSUI found',
+            message: 'You need octSUI to deposit as collateral',
+          });
+          setStep('input');
+          return;
+        }
+
+        const depositTx = buildDepositCollateralWithAmountTransaction({
+          vaultId,
+          octsuiCoinId: coins[0].id,
+          amount: parseAmount(depositAmount),
+        });
+
+        await new Promise((resolve, reject) => {
+          signAndExecute(
+            { transaction: depositTx },
+            { 
+              onSuccess: (result) => {
+                addNotification({
+                  type: 'success',
+                  title: 'Collateral Deposited!',
+                  message: `Deposited ${depositAmount} octSUI`,
+                });
+                resolve(result);
+              }, 
+              onError: (error) => {
+                addNotification({
+                  type: 'error',
+                  title: 'Deposit Failed',
+                  message: error.message,
+                });
+                reject(error);
+              }
+            }
+          );
+        });
+      }
+
+      // Step 2: Borrow octUSD
+      if (borrowAmount && parseFloat(borrowAmount) > 0) {
+        const borrowTx = buildBorrowTransaction({
+          vaultId,
+          amount: parseAmount(borrowAmount),
+        });
+
+        signAndExecute(
+          { transaction: borrowTx },
+          {
+            onSuccess: () => {
+              addNotification({
+                type: 'success',
+                title: 'Borrow Successful!',
+                message: `Borrowed ${borrowAmount} octUSD`,
+              });
+              setDepositAmount('');
+              setBorrowAmount('');
+              setStep('input');
+              queryClient.invalidateQueries({ queryKey: ['vaultState'] });
+              queryClient.invalidateQueries({ queryKey: ['balance'] });
+            },
+            onError: (error) => {
+              addNotification({
+                type: 'error',
+                title: 'Borrow Failed',
+                message: error.message,
+              });
+              setStep('input');
+            },
+          }
+        );
+      } else {
+        // Only deposited collateral, no borrow
+        setDepositAmount('');
+        setStep('input');
+        queryClient.invalidateQueries({ queryKey: ['vaultState'] });
+        queryClient.invalidateQueries({ queryKey: ['balance'] });
+      }
+    } catch (error: any) {
+      addNotification({
+        type: 'error',
+        title: 'Transaction Error',
+        message: error.message,
+      });
+      setStep('input');
+    }
   };
+
+  const maxDepositAmount = Number(octsuiBalance) / 1e9;
+  const hasDeposit = depositAmount && parseFloat(depositAmount) > 0;
+  const hasBorrow = borrowAmount && parseFloat(borrowAmount) > 0;
 
   return (
     <Card className="glass border-primary/20">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-primary" />
-          Borrow More octUSD
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-green-500" />
+            Deposit & Borrow
+          </CardTitle>
+          <Badge variant="outline">0% Interest</Badge>
+        </div>
       </CardHeader>
-
       <CardContent className="space-y-6">
-        {/* Borrow Input */}
-        <div>
-          <div className="flex justify-between mb-2">
-            <label className="text-sm font-medium">Borrow Amount</label>
-            <span className="text-sm text-muted-foreground">
-              Available: {formatCurrency(availableBorrow)}
+        {/* Deposit Collateral */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Deposit octSUI (Optional)</label>
+            <span className="text-xs text-muted-foreground">
+              Balance: {formatAmount(octsuiBalance)}
             </span>
           </div>
-          
           <div className="relative">
             <Input
               type="number"
+              value={depositAmount}
+              onChange={(e) => setDepositAmount(e.target.value)}
               placeholder="0.00"
-              value={borrowAmount}
-              onChange={(e) => setBorrowAmount(e.target.value)}
-              className="h-14 text-xl pr-32"
+              className="pr-20"
+              disabled={step === 'processing'}
             />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setBorrowAmount(availableBorrow.toFixed(2))}
-              >
-                MAX
-              </Button>
-              <Badge variant="secondary" className="font-mono">
-                octUSD
-              </Badge>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+              onClick={handleMaxDeposit}
+              disabled={step === 'processing'}
+            >
+              MAX
+            </Button>
           </div>
         </div>
 
-        {/* Impact Preview */}
-        {borrowNum > 0 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className="space-y-4"
-          >
-            {/* Arrow Separator */}
-            <div className="flex justify-center">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <ArrowDown className="h-4 w-4 text-primary" />
-              </div>
+        {/* Arrow */}
+        {hasDeposit && (
+          <div className="flex justify-center">
+            <div className="p-2 rounded-full bg-primary/10 border border-primary/20">
+              <ArrowDown className="h-4 w-4 text-primary" />
             </div>
-
-            {/* Before/After Comparison */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Current State */}
-              <div className="space-y-2">
-                <div className="text-xs text-muted-foreground text-center">Current</div>
-                <Card className="border-white/10">
-                  <CardContent className="p-3 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Debt:</span>
-                      <span className="font-mono">{formatCurrency(currentDebt)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Health:</span>
-                      <span className={cn(
-                        'font-semibold',
-                        vault.health >= 1.5 ? 'text-green-500' :
-                        vault.health >= 1.2 ? 'text-yellow-500' : 'text-red-500'
-                      )}>
-                        {vault.health.toFixed(2)}×
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">LTV:</span>
-                      <span className="font-mono">{vault.ltv}%</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* New State */}
-              <div className="space-y-2">
-                <div className="text-xs text-muted-foreground text-center">After Borrow</div>
-                <Card className={cn(
-                  'border-2',
-                  newHealth >= 1.5 ? 'border-green-500/30' :
-                  newHealth >= 1.2 ? 'border-yellow-500/30' : 'border-red-500/30'
-                )}>
-                  <CardContent className="p-3 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Debt:</span>
-                      <span className="font-mono font-semibold">
-                        {formatCurrency(newDebt)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Health:</span>
-                      <span className={cn(
-                        'font-semibold',
-                        newHealth >= 1.5 ? 'text-green-500' :
-                        newHealth >= 1.2 ? 'text-yellow-500' : 'text-red-500'
-                      )}>
-                        {newHealth.toFixed(2)}×
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">LTV:</span>
-                      <span className="font-mono">{newLTV.toFixed(1)}%</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-
-            {/* Health Factor Gauge */}
-            <div className="flex justify-center py-4">
-              <HealthFactorGauge
-                value={newHealth}
-                size="md"
-                showLiquidationPrice
-                liquidationPrice={newLiqPrice}
-              />
-            </div>
-
-            {/* Transaction Details */}
-            <Card className="border-primary/20 bg-primary/5">
-              <CardContent className="p-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Borrow Amount:</span>
-                  <span className="font-mono font-semibold">
-                    {formatCurrency(borrowNum)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Minting Fee (0.5%):</span>
-                  <span className="font-mono">
-                    {formatCurrency(borrowNum * 0.005)}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-white/10">
-                  <span className="font-medium">You Receive:</span>
-                  <span className="font-mono font-bold">
-                    {formatCurrency(borrowNum * 0.995)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Warnings */}
-            {!validation.valid && validation.error && (
-              <Card className="border-red-500/30 bg-red-500/5">
-                <CardContent className="p-4 flex gap-3">
-                  <AlertTriangle className="h-5 w-5 text-red-400 shrink-0" />
-                  <div className="text-sm text-red-400">
-                    {validation.error}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {validation.valid && validation.warnings && validation.warnings.length > 0 && (
-              <Card className="border-amber-500/30 bg-amber-500/5">
-                <CardContent className="p-4">
-                  <div className="flex gap-3">
-                    <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
-                    <div className="text-sm space-y-1">
-                      {validation.warnings.map((warning, i) => (
-                        <p key={i} className="text-amber-400">{warning}</p>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </motion.div>
+          </div>
         )}
 
-        {/* Info Card */}
-        <Card className="border-primary/20 bg-background/50">
-          <CardContent className="p-4 flex gap-3">
-            <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-            <div className="text-sm text-muted-foreground">
-              <p className="mb-2">
-                Borrowing octUSD against your collateral allows you to access liquidity while still earning staking rewards.
-              </p>
-              <div className="space-y-1 text-xs">
-                <div>• 0% interest rate</div>
-                <div>• Only 0.5% one-time minting fee</div>
-                <div>• Maintain health factor above 1.1×</div>
+        {/* Borrow Amount */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Borrow octUSD</label>
+            <span className="text-xs text-muted-foreground">
+              Available: {formatCurrency(availableBorrow)}
+            </span>
+          </div>
+          <div className="relative">
+            <Input
+              type="number"
+              value={borrowAmount}
+              onChange={(e) => setBorrowAmount(e.target.value)}
+              placeholder="0.00"
+              className="pr-20"
+              disabled={step === 'processing'}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+              onClick={handleMaxBorrow}
+              disabled={step === 'processing'}
+            >
+              MAX
+            </Button>
+          </div>
+        </div>
+
+        {/* Preview */}
+        {(hasDeposit || hasBorrow) && preview && (
+          <div className="p-4 rounded-lg bg-muted space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">New LTV</span>
+              <div className="flex items-center gap-2">
+                <span className={`font-semibold ${
+                  preview.ltvPercent > 70 ? 'text-red-500' :
+                  preview.ltvPercent > 60 ? 'text-yellow-500' :
+                  'text-green-500'
+                }`}>
+                  {preview.ltvPercent.toFixed(1)}%
+                </span>
+                <span className="text-muted-foreground">/ 70%</span>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Submit Button */}
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Health Factor</span>
+              <span className="font-semibold">
+                {preview.healthFactor === Infinity ? '∞' : preview.healthFactor.toFixed(2)}×
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Status</span>
+              <Badge variant={
+                preview.healthStatus === 'safe' ? 'success' :
+                preview.healthStatus === 'warning' ? 'warning' : 'danger'
+              }>
+                {preview.healthStatus}
+              </Badge>
+            </div>
+
+            {preview.errorMessage && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-red-500">{preview.errorMessage}</p>
+              </div>
+            )}
+
+            {preview.canBorrow && preview.healthStatus !== 'safe' && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-500">
+                  This will increase your risk. Consider adding more collateral.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Action Button */}
         <Button
           variant="electric"
           size="lg"
           className="w-full gap-2"
           onClick={handleBorrow}
-          disabled={!borrowNum || !validation.valid}
-          loading={isSubmitting}
+          disabled={!preview?.canBorrow || step === 'processing' || !account || (!hasDeposit && !hasBorrow)}
         >
-          <DollarSign className="h-5 w-5" />
-          {isSubmitting ? 'Borrowing...' : `Borrow ${borrowNum || 0} octUSD`}
+          {step === 'processing' ? (
+            <>
+              <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Processing...
+            </>
+          ) : !account ? (
+            'Connect Wallet'
+          ) : !hasDeposit && !hasBorrow ? (
+            'Enter Amount'
+          ) : (
+            <>
+              <CheckCircle2 className="h-5 w-5" />
+              {hasDeposit && hasBorrow ? 'Deposit & Borrow' : hasDeposit ? 'Deposit Collateral' : 'Borrow octUSD'}
+            </>
+          )}
         </Button>
+
+        {/* Info */}
+        <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+          <div className="flex items-start gap-2">
+            <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+            <div className="text-xs text-blue-500 space-y-1">
+              <p>• Your octSUI collateral continues earning staking rewards</p>
+              <p>• Borrow up to 70% LTV at 0% interest</p>
+              <p>• Keep LTV below 80% to avoid liquidation</p>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
