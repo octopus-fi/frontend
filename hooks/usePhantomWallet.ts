@@ -16,7 +16,7 @@ import {toast} from "react-hot-toast"
 // Standard Wallet interface.  If none of these are installed we fall back to
 // the standard picker (connectAsync with no wallet argument).
 
-const PREFERRED_WALLETS = ["Phantom", "Sui Wallet", "OKX Wallet"] as const;
+const PREFERRED_WALLETS = ["Slush","Phantom", "Sui Wallet", "OKX Wallet"] as const;
 
 export function usePhantomWallet() {
   // ── dapp-kit primitives ───────────────────────────────────────────────────

@@ -42,6 +42,8 @@ import {
 } from "@/sdk/index";
 import { useUIStore } from "@/store/ui-store";
 import { useQueryClient } from "@tanstack/react-query";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Header } from "@/components/layout/Header";
 
 export default function StakePage() {
   const [mode, setMode] = useState<"stake" | "unstake">("stake");
@@ -203,323 +205,354 @@ export default function StakePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
-      {/* Page Header */}
-      <div>
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-4xl font-bold mb-2"
-        >
-          Liquid Staking
-        </motion.h1>
-        <p className="text-muted-foreground text-lg">
-          Stake SUI and receive octSUI - keep earning while you use your assets
-        </p>
-      </div>
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar />
 
-      {/* Stats Overview */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="glass border-primary/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">
-                  Total Staked
-                </span>
-                <Lock className="h-4 w-4 text-primary" />
-              </div>
-              <div className="text-2xl font-bold">
-                {poolStats ? formatAmount(poolStats.totalStaked) : "0.00"} SUI
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+      {/* Main Content Area */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header */}
+        <Header />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <Card className="glass border-primary/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">
-                  Current APY
-                </span>
-                <TrendingUp className="h-4 w-4 text-green-500" />
-              </div>
-              <div className="text-2xl font-bold text-green-500">
-                {formatPercent(estimatedAPY / 100)}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <Card className="glass border-primary/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">
-                  Exchange Rate
-                </span>
-                <Zap className="h-4 w-4 text-amber-500" />
-              </div>
-              <div className="text-2xl font-bold">
-                {exchangeRate.toFixed(4)}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Card className="glass border-primary/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-muted-foreground">
-                  Your octSUI
-                </span>
-                <Unlock className="h-4 w-4 text-cyan-500" />
-              </div>
-              <div className="text-2xl font-bold">
-                {formatAmount(octsuiBalance)}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
-      {/* Main Staking Card */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <Card className="glass border-primary/20">
-              <CardHeader>
-                <CardTitle>Stake / Unstake</CardTitle>
-                <CardDescription>
-                  Convert between SUI and octSUI
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Mode Toggle */}
-                <div className="flex gap-2 p-1 bg-muted rounded-lg">
-                  <button
-                    onClick={() => setMode("stake")}
-                    className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
-                      mode === "stake"
-                        ? "bg-primary text-primary-foreground shadow-lg"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Lock className="h-4 w-4 inline mr-2" />
-                    Stake
-                  </button>
-                  <button
-                    onClick={() => setMode("unstake")}
-                    className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
-                      mode === "unstake"
-                        ? "bg-primary text-primary-foreground shadow-lg"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Unlock className="h-4 w-4 inline mr-2" />
-                    Unstake
-                  </button>
-                </div>
-
-                {/* Input Section */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">
-                        {mode === "stake" ? "Stake Amount" : "Unstake Amount"}
-                      </label>
-                      <span className="text-sm text-muted-foreground">
-                        Balance:{" "}
-                        {formatAmount(
-                          mode === "stake" ? mocksuiBalance : octsuiBalance,
-                        )}
-                      </span>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="text-2xl h-16 pr-20"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-2 top-1/2 -translate-y-1/2"
-                        onClick={() => setAmount(maxAmount.toString())}
-                      >
-                        MAX
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Arrow */}
-                  <div className="flex justify-center">
-                    <div className="p-2 rounded-full bg-primary/10 border border-primary/20">
-                      <ArrowRight className="h-5 w-5 text-primary rotate-90" />
-                    </div>
-                  </div>
-
-                  {/* Output Preview */}
-                  <div className="p-4 rounded-lg bg-muted">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-muted-foreground">
-                        You will receive
-                      </span>
-                      <Badge variant="outline">
-                        {mode === "stake" ? "octSUI" : "MOCKSUI"}
-                      </Badge>
-                    </div>
-                    <div className="text-3xl font-bold">
-                      {calculateOutput().toFixed(4)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <Button
-                  variant="electric"
-                  size="lg"
-                  className="w-full gap-2"
-                  onClick={mode === "stake" ? handleStake : handleUnstake}
-                  disabled={!amount || isPending || !account}
-                  loading={isPending}
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto bg-background">
+          <div className="container mx-auto p-6">
+            <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
+              {/* Page Header */}
+              <div>
+                <motion.h1
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-4xl font-bold mb-2"
                 >
-                  {isPending ? (
-                    <>Processing...</>
-                  ) : (
-                    <>
-                      {mode === "stake" ? (
-                        <Lock className="h-5 w-5" />
-                      ) : (
-                        <Unlock className="h-5 w-5" />
-                      )}
-                      {mode === "stake" ? "Stake MOCKSUI" : "Unstake octSUI"}
-                    </>
-                  )}
-                </Button>
+                  Liquid Staking
+                </motion.h1>
+                <p className="text-muted-foreground text-lg">
+                  Stake SUI and receive octSUI - keep earning while you use your
+                  assets
+                </p>
+              </div>
 
-                {!account && (
-                  <p className="text-sm text-center text-amber-500">
-                    Please connect your wallet to continue
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+              {/* Stats Overview */}
+              <div className="grid md:grid-cols-4 gap-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <Card className="glass border-primary/20">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">
+                          Total Staked
+                        </span>
+                        <Lock className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {poolStats
+                          ? formatAmount(poolStats.totalStaked)
+                          : "0.00"}{" "}
+                        SUI
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
 
-        {/* Info Sidebar */}
-        <div className="space-y-6">
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <Card className="glass">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Info className="h-5 w-5" />
-                  How it Works
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <span className="shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
-                      1
-                    </span>
-                    Stake SUI
-                  </h4>
-                  <p className="text-sm text-muted-foreground ml-8">
-                    Deposit your SUI tokens into the staking pool
-                  </p>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Card className="glass border-primary/20">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">
+                          Current APY
+                        </span>
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                      </div>
+                      <div className="text-2xl font-bold text-green-500">
+                        {formatPercent(estimatedAPY / 100)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <Card className="glass border-primary/20">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">
+                          Exchange Rate
+                        </span>
+                        <Zap className="h-4 w-4 text-amber-500" />
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {exchangeRate.toFixed(4)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <Card className="glass border-primary/20">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">
+                          Your octSUI
+                        </span>
+                        <Unlock className="h-4 w-4 text-cyan-500" />
+                      </div>
+                      <div className="text-2xl font-bold">
+                        {formatAmount(octsuiBalance)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </div>
+
+              {/* Main Staking Card */}
+              <div className="grid lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <Card className="glass border-primary/20">
+                      <CardHeader>
+                        <CardTitle>Stake / Unstake</CardTitle>
+                        <CardDescription>
+                          Convert between SUI and octSUI
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        {/* Mode Toggle */}
+                        <div className="flex gap-2 p-1 bg-muted rounded-lg">
+                          <button
+                            onClick={() => setMode("stake")}
+                            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
+                              mode === "stake"
+                                ? "bg-primary text-primary-foreground shadow-lg"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <Lock className="h-4 w-4 inline mr-2" />
+                            Stake
+                          </button>
+                          <button
+                            onClick={() => setMode("unstake")}
+                            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
+                              mode === "unstake"
+                                ? "bg-primary text-primary-foreground shadow-lg"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            <Unlock className="h-4 w-4 inline mr-2" />
+                            Unstake
+                          </button>
+                        </div>
+
+                        {/* Input Section */}
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-sm font-medium">
+                                {mode === "stake"
+                                  ? "Stake Amount"
+                                  : "Unstake Amount"}
+                              </label>
+                              <span className="text-sm text-muted-foreground">
+                                Balance:{" "}
+                                {formatAmount(
+                                  mode === "stake"
+                                    ? mocksuiBalance
+                                    : octsuiBalance,
+                                )}
+                              </span>
+                            </div>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                value={amount}
+                                onChange={(e) => setAmount(e.target.value)}
+                                placeholder="0.00"
+                                className="text-2xl h-16 pr-20"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-2 top-1/2 -translate-y-1/2"
+                                onClick={() => setAmount(maxAmount.toString())}
+                              >
+                                MAX
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Arrow */}
+                          <div className="flex justify-center">
+                            <div className="p-2 rounded-full bg-primary/10 border border-primary/20">
+                              <ArrowRight className="h-5 w-5 text-primary rotate-90" />
+                            </div>
+                          </div>
+
+                          {/* Output Preview */}
+                          <div className="p-4 rounded-lg bg-muted">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm text-muted-foreground">
+                                You will receive
+                              </span>
+                              <Badge variant="outline">
+                                {mode === "stake" ? "octSUI" : "MOCKSUI"}
+                              </Badge>
+                            </div>
+                            <div className="text-3xl font-bold">
+                              {calculateOutput().toFixed(4)}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Submit Button */}
+                        <Button
+                          variant="electric"
+                          size="lg"
+                          className="w-full gap-2"
+                          onClick={
+                            mode === "stake" ? handleStake : handleUnstake
+                          }
+                          disabled={!amount || isPending || !account}
+                          loading={isPending}
+                        >
+                          {isPending ? (
+                            <>Processing...</>
+                          ) : (
+                            <>
+                              {mode === "stake" ? (
+                                <Lock className="h-5 w-5" />
+                              ) : (
+                                <Unlock className="h-5 w-5" />
+                              )}
+                              {mode === "stake"
+                                ? "Stake MOCKSUI"
+                                : "Unstake octSUI"}
+                            </>
+                          )}
+                        </Button>
+
+                        {!account && (
+                          <p className="text-sm text-center text-amber-500">
+                            Please connect your wallet to continue
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <span className="shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
-                      2
-                    </span>
-                    Receive octSUI
-                  </h4>
-                  <p className="text-sm text-muted-foreground ml-8">
-                    Get liquid octSUI tokens representing your stake
-                  </p>
-                </div>
+                {/* Info Sidebar */}
+                <div className="space-y-6">
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <Card className="glass">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Info className="h-5 w-5" />
+                          How it Works
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <h4 className="font-semibold flex items-center gap-2">
+                            <span className="shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
+                              1
+                            </span>
+                            Stake SUI
+                          </h4>
+                          <p className="text-sm text-muted-foreground ml-8">
+                            Deposit your SUI tokens into the staking pool
+                          </p>
+                        </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <span className="shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
-                      3
-                    </span>
-                    Earn Rewards
-                  </h4>
-                  <p className="text-sm text-muted-foreground ml-8">
-                    Automatically earn ~{estimatedAPY.toFixed(1)}% APY on your
-                    stake
-                  </p>
-                </div>
+                        <div className="space-y-2">
+                          <h4 className="font-semibold flex items-center gap-2">
+                            <span className="shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
+                              2
+                            </span>
+                            Receive octSUI
+                          </h4>
+                          <p className="text-sm text-muted-foreground ml-8">
+                            Get liquid octSUI tokens representing your stake
+                          </p>
+                        </div>
 
-                <div className="space-y-2">
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <span className="shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
-                      4
-                    </span>
-                    Use as Collateral
-                  </h4>
-                  <p className="text-sm text-muted-foreground ml-8">
-                    Deposit octSUI as collateral to borrow octUSD
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                        <div className="space-y-2">
+                          <h4 className="font-semibold flex items-center gap-2">
+                            <span className="shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
+                              3
+                            </span>
+                            Earn Rewards
+                          </h4>
+                          <p className="text-sm text-muted-foreground ml-8">
+                            Automatically earn ~{estimatedAPY.toFixed(1)}% APY
+                            on your stake
+                          </p>
+                        </div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.7 }}
-          >
-            <Card className="glass border-amber-500/20 bg-amber-500/5">
-              <CardHeader>
-                <CardTitle className="text-amber-500 flex items-center gap-2">
-                  <Info className="h-5 w-5" />
-                  Important Notes
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>• octSUI can be used as collateral in vaults</p>
-                <p>• Staking rewards accrue automatically</p>
-                <p>• Exchange rate increases over time as rewards accumulate</p>
-                <p>• Unstaking returns your original SUI + rewards</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+                        <div className="space-y-2">
+                          <h4 className="font-semibold flex items-center gap-2">
+                            <span className="shrink-0 h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
+                              4
+                            </span>
+                            Use as Collateral
+                          </h4>
+                          <p className="text-sm text-muted-foreground ml-8">
+                            Deposit octSUI as collateral to borrow octUSD
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 }}
+                  >
+                    <Card className="glass border-amber-500/20 bg-amber-500/5">
+                      <CardHeader>
+                        <CardTitle className="text-amber-500 flex items-center gap-2">
+                          <Info className="h-5 w-5" />
+                          Important Notes
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3 text-sm text-muted-foreground">
+                        <p>• octSUI can be used as collateral in vaults</p>
+                        <p>• Staking rewards accrue automatically</p>
+                        <p>
+                          • Exchange rate increases over time as rewards
+                          accumulate
+                        </p>
+                        <p>• Unstaking returns your original SUI + rewards</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );
