@@ -51,23 +51,47 @@ export async function getUserVaultId(
   client: SuiJsonRpcClient,
   userAddress: string,
 ): Promise<string | null> {
-  // Query user's objects and find their vault
-  const objects = await client.getOwnedObjects({
-    owner: userAddress,
-    filter: {
-      StructType: `${PACKAGE_ID}::vault_manager::Vault<${COIN_TYPES.OCTSUI}>`,
-    },
-    options: {
-      showType: true,
-      showContent: true,
-    },
-  });
+  try {
+    // Step 1: Fetch the VaultRegistry to get the internal table ID
+    const registry = await client.getObject({
+      id: SHARED_OBJECTS.VAULT_REGISTRY_OCTSUI_ID,
+      options: { showContent: true },
+    });
 
-  if (objects.data.length > 0) {
-    return objects.data[0].data?.objectId || null;
+    if (registry.data?.content?.dataType !== 'moveObject') {
+      console.log('VaultRegistry not found or invalid');
+      return null;
+    }
+
+    const registryFields = registry.data.content.fields as any;
+    const tableId = registryFields.vaults?.fields?.id?.id;
+
+    if (!tableId) {
+      console.log('Table ID not found in registry');
+      return null;
+    }
+
+    // Step 2: Query the table's dynamic field for the user's vault
+    const dynamicField = await client.getDynamicFieldObject({
+      parentId: tableId,
+      name: {
+        type: 'address',
+        value: userAddress,
+      },
+    });
+
+    if (dynamicField.data?.content?.dataType === 'moveObject') {
+      const fields = dynamicField.data.content.fields as any;
+      // The value in the table is the vault object ID
+      return fields.value || null;
+    }
+
+    return null;
+  } catch (error) {
+    // User doesn't have a vault registered
+    console.log('No vault found for user:', userAddress, error);
+    return null;
   }
-
-  return null;
 }
 
 /**
@@ -101,29 +125,24 @@ export async function getVaultState(
 
 /**
  * Get all vaults owned by user (for multi-collateral support)
+ * Currently only supports OCTSUI vaults
  */
 export async function getUserVaults(
   client: SuiJsonRpcClient,
   userAddress: string,
 ): Promise<Array<{ id: string; type: string }>> {
-  const objects = await client.getOwnedObjects({
-    owner: userAddress,
-    filter: {
-      MatchAny: [
-        {
-          StructType: `${PACKAGE_ID}::vault_manager::Vault<${COIN_TYPES.OCTSUI}>`,
-        },
-      ],
-    },
-    options: { showType: true },
-  });
+  // For now, we only support OCTSUI vaults
+  // Query the registry for the user's vault
+  const vaultId = await getUserVaultId(client, userAddress);
 
-  return objects.data
-    .map((obj) => ({
-      id: obj.data?.objectId || "",
-      type: obj.data?.type || "",
-    }))
-    .filter((v) => v.id);
+  if (vaultId) {
+    return [{
+      id: vaultId,
+      type: `${PACKAGE_ID}::vault_manager::Vault<${COIN_TYPES.OCTSUI}>`,
+    }];
+  }
+
+  return [];
 }
 
 // ============================================================================

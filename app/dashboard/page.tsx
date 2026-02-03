@@ -310,7 +310,7 @@ export default function DashboardPage() {
                         <CardTitle>Your Vault</CardTitle>
                         <Button variant="outline" size="sm" asChild>
                           <Link
-                            href={`/dashboard/borrow/${vaultId}`}
+                            href={`/borrow/${vaultId}`}
                             className="gap-2"
                           >
                             View Details
@@ -373,13 +373,12 @@ export default function DashboardPage() {
                               </div>
                               <div className="h-2 bg-muted rounded-full overflow-hidden">
                                 <div
-                                  className={`h-full transition-all ${
-                                    ltv > 70
+                                  className={`h-full transition-all ${ltv > 70
                                       ? "bg-red-500"
                                       : ltv > 60
                                         ? "bg-yellow-500"
                                         : "gradient-to-r from-primary to-secondary"
-                                  }`}
+                                    }`}
                                   style={{ width: `${Math.min(ltv, 100)}%` }}
                                 />
                               </div>
@@ -501,45 +500,45 @@ export default function DashboardPage() {
                   {(healthStatus === "warning" ||
                     healthStatus === "danger" ||
                     healthStatus === "liquidatable") && (
-                    <Card className="glass border-amber-500/50 bg-amber-500/5">
-                      <CardHeader>
-                        <div className="flex items-center gap-2">
-                          <AlertCircle className="h-5 w-5 text-amber-500" />
-                          <CardTitle className="text-amber-500">
-                            Health Warning
-                          </CardTitle>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Your vault health is {healthStatus}. Consider adding
-                          collateral or repaying debt.
-                        </p>
-                        <div className="space-y-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            asChild
-                          >
-                            <Link href={`/dashboard/borrow/${vaultId}`}>
-                              Add Collateral
-                            </Link>
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            asChild
-                          >
-                            <Link href={`/dashboard/borrow/${vaultId}`}>
-                              Repay Debt
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
+                      <Card className="glass border-amber-500/50 bg-amber-500/5">
+                        <CardHeader>
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-amber-500" />
+                            <CardTitle className="text-amber-500">
+                              Health Warning
+                            </CardTitle>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Your vault health is {healthStatus}. Consider adding
+                            collateral or repaying debt.
+                          </p>
+                          <div className="space-y-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              asChild
+                            >
+                              <Link href={`/borrow/${vaultId}`}>
+                                Add Collateral
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              asChild
+                            >
+                              <Link href={`/borrow/${vaultId}`}>
+                                Repay Debt
+                              </Link>
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
 
                   {/* Quick Actions */}
                   <Card className="glass border-primary/20">
@@ -562,7 +561,7 @@ export default function DashboardPage() {
                         className="w-full justify-start"
                         asChild
                       >
-                        <Link href={`/dashboard/borrow/${vaultId}`}>
+                        <Link href={`/borrow/${vaultId}`}>
                           <Activity className="h-4 w-4 mr-2" />
                           Manage Vault
                         </Link>

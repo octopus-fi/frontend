@@ -27,9 +27,9 @@ function createQueryClient() {
 // the team can point at a private RPC in CI or staging.
 
 const networkUrls = {
-  mainnet: process.env.NEXT_PUBLIC_SUI_MAINNET_RPC || getJsonRpcFullnodeUrl('mainnet'),
-  testnet: process.env.NEXT_PUBLIC_SUI_TESTNET_RPC || getJsonRpcFullnodeUrl('testnet'),
-  devnet:  process.env.NEXT_PUBLIC_SUI_DEVNET_RPC  || getJsonRpcFullnodeUrl('devnet'),
+  mainnet: { url: process.env.NEXT_PUBLIC_SUI_MAINNET_RPC || getJsonRpcFullnodeUrl('mainnet'), network: 'mainnet' as const },
+  testnet: { url: process.env.NEXT_PUBLIC_SUI_TESTNET_RPC || getJsonRpcFullnodeUrl('testnet'), network: 'testnet' as const },
+  devnet: { url: process.env.NEXT_PUBLIC_SUI_DEVNET_RPC || getJsonRpcFullnodeUrl('devnet'), network: 'devnet' as const },
 } as const;
 
 // ─── Active network ──────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider>
+      <SuiClientProvider networks={networkUrls} defaultNetwork={activeNetwork}>
         <DappKitWalletProvider
         >
           {children}

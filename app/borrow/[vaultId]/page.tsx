@@ -72,7 +72,7 @@ export default function VaultDetailPage() {
               This vault doesn't exist or you don't have permission to view it.
             </p>
             <Button variant="outline" asChild>
-              <Link href="/dashboard/borrow">
+              <Link href="/borrow">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Vaults
               </Link>
@@ -105,7 +105,7 @@ export default function VaultDetailPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Link
-                      href="/dashboard/borrow"
+                      href="/borrow"
                       className="hover:text-primary transition-colors"
                     >
                       Vaults
@@ -135,7 +135,7 @@ export default function VaultDetailPage() {
 
                 <div className="flex gap-3">
                   <Button variant="outline" asChild>
-                    <Link href="/dashboard/borrow">
+                    <Link href="/borrow">
                       <ArrowLeft className="h-4 w-4 mr-2" />
                       Back
                     </Link>
@@ -153,47 +153,47 @@ export default function VaultDetailPage() {
               {(health.status === "warning" ||
                 health.status === "danger" ||
                 health.status === "liquidatable") && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <Card className="glass border-amber-500/50 bg-amber-500/5">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <AlertTriangle className="h-6 w-6 text-amber-500 shrink-0 mt-1" />
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-amber-500 mb-1">
-                            Vault Health Warning
-                          </h3>
-                          <p className="text-sm text-muted-foreground mb-3">
-                            {health.status === "liquidatable"
-                              ? "Your vault is at risk of liquidation! Add collateral or repay debt immediately."
-                              : health.status === "danger"
-                                ? "Your vault is at maximum LTV. Add collateral or repay debt to reduce risk."
-                                : "Your vault health is declining. Consider adding collateral or repaying debt."}
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setActiveTab("borrow")}
-                            >
-                              Add Collateral
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setActiveTab("repay")}
-                            >
-                              Repay Debt
-                            </Button>
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <Card className="glass border-amber-500/50 bg-amber-500/5">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <AlertTriangle className="h-6 w-6 text-amber-500 shrink-0 mt-1" />
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-amber-500 mb-1">
+                              Vault Health Warning
+                            </h3>
+                            <p className="text-sm text-muted-foreground mb-3">
+                              {health.status === "liquidatable"
+                                ? "Your vault is at risk of liquidation! Add collateral or repay debt immediately."
+                                : health.status === "danger"
+                                  ? "Your vault is at maximum LTV. Add collateral or repay debt to reduce risk."
+                                  : "Your vault health is declining. Consider adding collateral or repaying debt."}
+                            </p>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setActiveTab("borrow")}
+                              >
+                                Add Collateral
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setActiveTab("repay")}
+                              >
+                                Repay Debt
+                              </Button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
 
               {/* Overview Cards */}
               <div className="grid md:grid-cols-4 gap-6">

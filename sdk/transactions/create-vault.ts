@@ -43,7 +43,7 @@ import { PACKAGE_ID, SHARED_OBJECTS, COIN_TYPES, MODULE_NAMES } from '../constan
  */
 export function buildCreateVaultTransaction(): Transaction {
   const tx = new Transaction();
-  
+
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULE_NAMES.VAULT_MANAGER}::create_vault`,
     typeArguments: [COIN_TYPES.OCTSUI],
@@ -51,6 +51,6 @@ export function buildCreateVaultTransaction(): Transaction {
       tx.object(SHARED_OBJECTS.VAULT_REGISTRY_OCTSUI_ID),
     ],
   });
-  
+
   return tx;
 }

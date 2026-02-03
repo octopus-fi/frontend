@@ -19,7 +19,7 @@ export default function BorrowPage() {
   // Redirect to vault detail if vault exists
   useEffect(() => {
     if (vaultId && !isLoading) {
-      router.push(`/dashboard/borrow/${vaultId}`);
+      router.push(`/borrow/${vaultId}`);
     }
   }, [vaultId, isLoading, router]);
 
@@ -27,7 +27,7 @@ export default function BorrowPage() {
     try {
       const newVaultId = await createVault();
       if (newVaultId) {
-        router.push(`/dashboard/borrow/${newVaultId}`);
+        router.push(`/borrow/${newVaultId}`);
       }
     } catch (error) {
       console.error("Failed to create vault:", error);

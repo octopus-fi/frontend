@@ -109,7 +109,7 @@ export function VaultCard({
             <div>
               <CardTitle className="text-2xl mb-2">
                 <Link
-                  href={`/dashboard/borrow/${vaultId}`}
+                  href={`/borrow/${vaultId}`}
                   className="hover:text-primary transition-colors"
                 >
                   Vault #{vaultId.slice(0, 8)}
@@ -178,12 +178,12 @@ export function VaultCard({
             className={cn(
               "p-3 rounded-lg border",
               healthStatus.level === "safe" &&
-                "bg-green-500/10 border-green-500/20",
+              "bg-green-500/10 border-green-500/20",
               healthStatus.level === "warning" &&
-                "bg-yellow-500/10 border-yellow-500/20",
+              "bg-yellow-500/10 border-yellow-500/20",
               (healthStatus.level === "danger" ||
                 healthStatus.level === "liquidatable") &&
-                "bg-red-500/10 border-red-500/20",
+              "bg-red-500/10 border-red-500/20",
             )}
           >
             <div className="flex items-center justify-between">
@@ -228,11 +228,11 @@ export function VaultCard({
           {/* Actions */}
           <div className="flex gap-2 pt-2">
             <Button variant="outline" size="sm" className="flex-1" asChild>
-              <Link href={`/dashboard/borrow/${vaultId}`}>Manage</Link>
+              <Link href={`/borrow/${vaultId}`}>Manage</Link>
             </Button>
             {!aiManaged && (
               <Button variant="outline" size="sm" className="gap-1" asChild>
-                <Link href={`/dashboard/borrow/${vaultId}`}>
+                <Link href={`/borrow/${vaultId}`}>
                   <Bot className="h-4 w-4" />
                   Enable AI
                 </Link>
