@@ -209,7 +209,7 @@ export default function AnalyticsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <APYProjectionChart currentAPY={estimatedApy} />
+          {/* <APYProjectionChart currentAPY={estimatedApy} /> */}
         </motion.div>
       </div>
 

@@ -1,22 +1,22 @@
 /**
  * 🐙 Octopus Finance - Read/Query Functions
- * 
+ *
  * Helper functions to read on-chain state
- * 
+ *
  * @package @mysten/sui - Sui TypeScript SDK
  * @package @mysten/dapp-kit - For React hooks (useSuiJsonRpcClient)
  */
 
-import { SuiJsonRpcClient } from '@mysten/sui/jsonRpc';
-import { 
-  PACKAGE_ID, 
-  SHARED_OBJECTS, 
-  COIN_TYPES, 
+import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
+import {
+  PACKAGE_ID,
+  SHARED_OBJECTS,
+  COIN_TYPES,
   PROTOCOL_PARAMS,
   VaultState,
   PositionState,
   PoolStats,
-} from '../constants';
+} from "../constants";
 
 const { SCALING_FACTOR } = PROTOCOL_PARAMS;
 
@@ -26,44 +26,47 @@ const { SCALING_FACTOR } = PROTOCOL_PARAMS;
 
 /**
  * Get user's vault ID from registry
- * 
+ *
  * @example
  * ```tsx
  * import { useSuiJsonRpcClient, useCurrentAccount } from '@mysten/dapp-kit';
  * import { getUserVaultId } from './queries';
- * 
+ *
  * function VaultInfo() {
  *   const client = useSuiJsonRpcClient();
  *   const account = useCurrentAccount();
  *   const [vaultId, setVaultId] = useState<string | null>(null);
- *   
+ *
  *   useEffect(() => {
  *     if (account?.address) {
  *       getUserVaultId(client, account.address).then(setVaultId);
  *     }
  *   }, [account]);
- *   
+ *
  *   return <div>Vault: {vaultId || 'No vault'}</div>;
  * }
  * ```
  */
 export async function getUserVaultId(
   client: SuiJsonRpcClient,
-  userAddress: string
+  userAddress: string,
 ): Promise<string | null> {
   // Query user's objects and find their vault
-  const objects = await client.lis({
+  const objects = await client.getOwnedObjects({
     owner: userAddress,
-    // filter: {
-    //   StructType: `${PACKAGE_ID}::vault_manager::Vault<${COIN_TYPES.OCTSUI}>`,
-    // },
-    // options: { showContent: true },
+    filter: {
+      StructType: `${PACKAGE_ID}::vault_manager::Vault<${COIN_TYPES.OCTSUI}>`,
+    },
+    options: {
+      showType: true,
+      showContent: true,
+    },
   });
-  
-  if (objects.length > 0) {
+
+  if (objects.data.length > 0) {
     return objects.data[0].data?.objectId || null;
   }
-  
+
   return null;
 }
 
@@ -72,20 +75,20 @@ export async function getUserVaultId(
  */
 export async function getVaultState(
   client: SuiJsonRpcClient,
-  vaultId: string
+  vaultId: string,
 ): Promise<VaultState | null> {
   try {
     const object = await client.getObject({
       id: vaultId,
       options: { showContent: true },
     });
-    
-    if (object.data?.content?.dataType !== 'moveObject') {
+
+    if (object.data?.content?.dataType !== "moveObject") {
       return null;
     }
-    
+
     const fields = object.data.content.fields as any;
-    
+
     return {
       collateral: parseBalance(fields.collateral),
       debt: BigInt(fields.debt || 0),
@@ -101,22 +104,26 @@ export async function getVaultState(
  */
 export async function getUserVaults(
   client: SuiJsonRpcClient,
-  userAddress: string
+  userAddress: string,
 ): Promise<Array<{ id: string; type: string }>> {
   const objects = await client.getOwnedObjects({
     owner: userAddress,
     filter: {
       MatchAny: [
-        { StructType: `${PACKAGE_ID}::vault_manager::Vault<${COIN_TYPES.OCTSUI}>` },
+        {
+          StructType: `${PACKAGE_ID}::vault_manager::Vault<${COIN_TYPES.OCTSUI}>`,
+        },
       ],
     },
     options: { showType: true },
   });
-  
-  return objects.data.map(obj => ({
-    id: obj.data?.objectId || '',
-    type: obj.data?.type || '',
-  })).filter(v => v.id);
+
+  return objects.data
+    .map((obj) => ({
+      id: obj.data?.objectId || "",
+      type: obj.data?.type || "",
+    }))
+    .filter((v) => v.id);
 }
 
 // ============================================================================
@@ -128,7 +135,7 @@ export async function getUserVaults(
  */
 export async function getUserStakePositions(
   client: SuiJsonRpcClient,
-  userAddress: string
+  userAddress: string,
 ): Promise<string[]> {
   const objects = await client.getOwnedObjects({
     owner: userAddress,
@@ -137,8 +144,8 @@ export async function getUserStakePositions(
     },
     options: { showContent: true },
   });
-  
-  return objects.data.map(obj => obj.data?.objectId || '').filter(Boolean);
+
+  return objects.data.map((obj) => obj.data?.objectId || "").filter(Boolean);
 }
 
 /**
@@ -146,20 +153,20 @@ export async function getUserStakePositions(
  */
 export async function getStakePositionState(
   client: SuiJsonRpcClient,
-  positionId: string
+  positionId: string,
 ): Promise<PositionState | null> {
   try {
     const object = await client.getObject({
       id: positionId,
       options: { showContent: true },
     });
-    
-    if (object.data?.content?.dataType !== 'moveObject') {
+
+    if (object.data?.content?.dataType !== "moveObject") {
       return null;
     }
-    
+
     const fields = object.data.content.fields as any;
-    
+
     return {
       shares: BigInt(fields.shares || 0),
       pendingRewards: BigInt(fields.pending_rewards || 0),
@@ -180,20 +187,20 @@ export async function getStakePositionState(
  */
 export async function getPoolStats(
   client: SuiJsonRpcClient,
-  poolId: string = SHARED_OBJECTS.STAKING_POOL_ID
+  poolId: string = SHARED_OBJECTS.STAKING_POOL_ID,
 ): Promise<PoolStats | null> {
   try {
     const object = await client.getObject({
       id: poolId,
       options: { showContent: true },
     });
-    
-    if (object.data?.content?.dataType !== 'moveObject') {
+
+    if (object.data?.content?.dataType !== "moveObject") {
       return null;
     }
-    
+
     const fields = object.data.content.fields as any;
-    
+
     return {
       totalShares: BigInt(fields.total_shares || 0),
       totalRewards: BigInt(fields.total_rewards || 0),
@@ -215,30 +222,30 @@ export async function getPoolStats(
  */
 export async function getOctsuiPrice(
   client: SuiJsonRpcClient,
-  oracleId: string = SHARED_OBJECTS.ORACLE_ID
+  oracleId: string = SHARED_OBJECTS.ORACLE_ID,
 ): Promise<bigint> {
   try {
     const object = await client.getObject({
       id: oracleId,
       options: { showContent: true },
     });
-    
-    if (object.data?.content?.dataType !== 'moveObject') {
+
+    if (object.data?.content?.dataType !== "moveObject") {
       return 0n;
     }
-    
+
     const fields = object.data.content.fields as any;
     const prices = fields.prices?.fields?.contents || [];
-    
+
     // Find OCTSUI price in the table
     // This is a simplified approach - in production you'd use dynamic field queries
     for (const entry of prices) {
-      const typeName = entry?.fields?.key?.fields?.name || '';
-      if (typeName.includes('OCTSUI')) {
+      const typeName = entry?.fields?.key?.fields?.name || "";
+      if (typeName.includes("OCTSUI")) {
         return BigInt(entry.fields.value || 0);
       }
     }
-    
+
     return 0n;
   } catch {
     return 0n;
@@ -250,7 +257,7 @@ export async function getOctsuiPrice(
  */
 export async function getOctsuiPriceUsd(
   client: SuiJsonRpcClient,
-  oracleId: string = SHARED_OBJECTS.ORACLE_ID
+  oracleId: string = SHARED_OBJECTS.ORACLE_ID,
 ): Promise<number> {
   const priceRaw = await getOctsuiPrice(client, oracleId);
   return Number(priceRaw) / Number(SCALING_FACTOR);
@@ -266,14 +273,14 @@ export async function getOctsuiPriceUsd(
 export async function getUserCoins(
   client: SuiJsonRpcClient,
   userAddress: string,
-  coinType: string
+  coinType: string,
 ): Promise<Array<{ id: string; balance: bigint }>> {
   const coins = await client.getCoins({
     owner: userAddress,
     coinType,
   });
-  
-  return coins.data.map(coin => ({
+
+  return coins.data.map((coin) => ({
     id: coin.coinObjectId,
     balance: BigInt(coin.balance),
   }));
@@ -284,7 +291,7 @@ export async function getUserCoins(
  */
 export async function getUserOctsuiBalance(
   client: SuiJsonRpcClient,
-  userAddress: string
+  userAddress: string,
 ): Promise<bigint> {
   const coins = await getUserCoins(client, userAddress, COIN_TYPES.OCTSUI);
   return coins.reduce((sum, c) => sum + c.balance, 0n);
@@ -295,7 +302,7 @@ export async function getUserOctsuiBalance(
  */
 export async function getUserOctusdBalance(
   client: SuiJsonRpcClient,
-  userAddress: string
+  userAddress: string,
 ): Promise<bigint> {
   const coins = await getUserCoins(client, userAddress, COIN_TYPES.OCTUSD);
   return coins.reduce((sum, c) => sum + c.balance, 0n);
@@ -306,7 +313,7 @@ export async function getUserOctusdBalance(
  */
 export async function getUserMocksuiBalance(
   client: SuiJsonRpcClient,
-  userAddress: string
+  userAddress: string,
 ): Promise<bigint> {
   const coins = await getUserCoins(client, userAddress, COIN_TYPES.MOCKSUI);
   return coins.reduce((sum, c) => sum + c.balance, 0n);
@@ -322,7 +329,7 @@ export async function getUserMocksuiBalance(
 export async function isAIAuthorizedForVault(
   client: SuiJsonRpcClient,
   aiAgentAddress: string,
-  vaultId: string
+  vaultId: string,
 ): Promise<boolean> {
   const objects = await client.getOwnedObjects({
     owner: aiAgentAddress,
@@ -331,16 +338,16 @@ export async function isAIAuthorizedForVault(
     },
     options: { showContent: true },
   });
-  
+
   for (const obj of objects.data) {
-    if (obj.data?.content?.dataType === 'moveObject') {
+    if (obj.data?.content?.dataType === "moveObject") {
       const fields = obj.data.content.fields as any;
       if (fields.authorized_vault_id === vaultId) {
         return true;
       }
     }
   }
-  
+
   return false;
 }
 
@@ -350,12 +357,12 @@ export async function isAIAuthorizedForVault(
 
 function parseBalance(balanceField: any): bigint {
   if (!balanceField) return 0n;
-  
+
   // Handle different balance formats
-  if (typeof balanceField === 'string' || typeof balanceField === 'number') {
+  if (typeof balanceField === "string" || typeof balanceField === "number") {
     return BigInt(balanceField);
   }
-  
+
   // Nested field structure
   const value = balanceField.fields?.value || balanceField.value || 0;
   return BigInt(value);

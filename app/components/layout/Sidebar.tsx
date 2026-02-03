@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/ui-store';
-import { usePoolStats } from '@/lib/sdk';
+import { usePoolStats } from '@/sdk/index';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,

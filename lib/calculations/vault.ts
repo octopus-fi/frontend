@@ -59,16 +59,16 @@ export function calculateLiquidationPrice(
 /**
  * Calculate minimum collateral needed for target health
  */
-export function calculateMinCollateral(
-  debt: number | bigint,
-  price: number,
-  targetHealth: number = PROTOCOL_PARAMS.AI_REBALANCE_THRESHOL
-): number {
-  const debtValue = Number(debt);
-  if (debtValue === 0) return 0;
+// export function calculateMinCollateral(
+//   debt: number | bigint,
+//   price: number,
+//   targetHealth: number = PROTOCOL_PARAMS.AI_REBALANCE_THRESHOL
+// ): number {
+//   const debtValue = Number(debt);
+//   if (debtValue === 0) return 0;
   
-  return (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS);
-}
+//   return (debtValue * targetHealth) / (price * PROTOCOL_PARAMS.LIQUIDATION_THRESHOLD_BPS);
+// }
 
 /**
  * Calculate how much more can be borrowed
@@ -86,17 +86,17 @@ export function calculateAvailableBorrow(
 /**
  * Calculate APY including staking rewards and leverage
  */
-export function calculateNetAPY(
-  collateral: number | bigint,
-  debt: number | bigint,
-  stakingAPY: number = PROTOCOL_PARAMS.STAKING_APY
-): number {
-  const collateralValue = Number(collateral);
-  if (collateralValue === 0) return stakingAPY * 100;
+// export function calculateNetAPY(
+//   collateral: number | bigint,
+//   debt: number | bigint,
+//   stakingAPY: number = PROTOCOL_PARAMS.STAKING_APY
+// ): number {
+//   const collateralValue = Number(collateral);
+//   if (collateralValue === 0) return stakingAPY * 100;
   
-  const leverage = (collateralValue + Number(debt)) / collateralValue;
-  return stakingAPY * leverage * 100;
-}
+//   const leverage = (collateralValue + Number(debt)) / collateralValue;
+//   return stakingAPY * leverage * 100;
+// }
 
 /**
  * Calculate risk level based on health factor
@@ -166,28 +166,28 @@ export function estimateGasCost(
 /**
  * Calculate projected earnings
  */
-export function calculateProjectedEarnings(
-  collateral: number | bigint,
-  debt: number | bigint,
-  days: number = 30
-): {
-  stakingRewards: number;
-  borrowCost: number;
-  netEarnings: number;
-} {
-  const collateralValue = Number(collateral);
-  // const debtValue = Number(debt);
+// export function calculateProjectedEarnings(
+//   collateral: number | bigint,
+//   debt: number | bigint,
+//   days: number = 30
+// ): {
+//   stakingRewards: number;
+//   borrowCost: number;
+//   netEarnings: number;
+// } {
+//   const collateralValue = Number(collateral);
+//   // const debtValue = Number(debt);
   
-  const stakingRewards = (collateralValue * PROTOCOL_PARAMS.STAKING_APY * days) / 365;
-  const borrowCost = 0; // 0% interest
-  const netEarnings = stakingRewards - borrowCost;
+//   const stakingRewards = (collateralValue * PROTOCOL_PARAMS.STAKING_APY * days) / 365;
+//   const borrowCost = 0; // 0% interest
+//   const netEarnings = stakingRewards - borrowCost;
   
-  return {
-    stakingRewards,
-    borrowCost,
-    netEarnings,
-  };
-}
+//   return {
+//     stakingRewards,
+//     borrowCost,
+//     netEarnings,
+//   };
+// }
 
 /**
  * Validate vault parameters

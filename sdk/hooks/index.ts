@@ -310,31 +310,44 @@ export function useBorrowPreview(depositAmount: number, borrowAmount: number) {
  * Hook to create vault
  */
 export function useCreateVault() {
-  const { mutate: signAndExecute, isPending } = useSignAndExecuteTransaction();
+  const { mutateAsync: signAndExecute, isPending } = useSignAndExecuteTransaction();
+  const suiClient = useSuiClient(); // Access the Sui RPC client
   const queryClient = useQueryClient();
 
   const createVault = async () => {
     const tx = buildCreateVaultTransaction();
 
-    return new Promise<string>((resolve, reject) => {
-      signAndExecute(
-        { transaction: tx },
-        {
-          onSuccess: (result) => {
-            queryClient.invalidateQueries({ queryKey: ["vaultId"] });
+    try {
+      // 1. Execute the transaction via the wallet
+      const result = await signAndExecute({ transaction: tx });
 
-            // Extract new vault ID
-            const created = result.objectChanges?.find(
-              (c) =>
-                c.type === "created" &&
-                (c as any).objectType?.includes("Vault"),
-            );
-            resolve((created as any)?.objectId || "");
-          },
-          onError: reject,
+      // 2. Fetch the full transaction data including objectChanges
+      const fullTransaction = await suiClient.getTransactionBlock({
+        digest: result.digest,
+        options: {
+          showObjectChanges: true, // This is required to see created objects
         },
+      });
+
+      // 3. Invalidate queries to refresh UI
+      queryClient.invalidateQueries({ queryKey: ["vaultId"] });
+
+      // 4. Extract the vault ID from the queried objectChanges
+      const created = fullTransaction.objectChanges?.find(
+        (c) =>
+          c.type === "created" &&
+          c.objectType.includes("Vault")
       );
-    });
+
+      if (created && "objectId" in created) {
+        return created.objectId;
+      }
+      
+      throw new Error("Vault object not found in transaction changes.");
+    } catch (error) {
+      console.error("Failed to create vault:", error);
+      throw error;
+    }
   };
 
   return { createVault, isPending };
