@@ -244,30 +244,46 @@ export async function getOctsuiPrice(
   oracleId: string = SHARED_OBJECTS.ORACLE_ID,
 ): Promise<bigint> {
   try {
-    const object = await client.getObject({
+    // Step 1: Get the Oracle object to find the prices table ID
+    const oracle = await client.getObject({
       id: oracleId,
       options: { showContent: true },
     });
 
-    if (object.data?.content?.dataType !== "moveObject") {
-      return 0n;
+    if (oracle.data?.content?.dataType !== "moveObject") {
+      console.log('Oracle object not found');
+      return 3_500_000_000n; // Fallback to $3.5
     }
 
-    const fields = object.data.content.fields as any;
-    const prices = fields.prices?.fields?.contents || [];
+    const fields = oracle.data.content.fields as any;
+    const pricesTableId = fields.prices?.fields?.id?.id;
 
-    // Find OCTSUI price in the table
-    // This is a simplified approach - in production you'd use dynamic field queries
-    for (const entry of prices) {
-      const typeName = entry?.fields?.key?.fields?.name || "";
-      if (typeName.includes("OCTSUI")) {
-        return BigInt(entry.fields.value || 0);
-      }
+    if (!pricesTableId) {
+      console.log('Prices table not found in Oracle');
+      return 3_500_000_000n; // Fallback to $3.5
     }
 
-    return 0n;
-  } catch {
-    return 0n;
+    // Step 2: Query the dynamic field for OCTSUI price
+    // The key is a TypeName with the full type path
+    const dynamicField = await client.getDynamicFieldObject({
+      parentId: pricesTableId,
+      name: {
+        type: '0x1::type_name::TypeName',
+        value: {
+          name: COIN_TYPES.OCTSUI.replace('0x', ''),
+        },
+      },
+    });
+
+    if (dynamicField.data?.content?.dataType === 'moveObject') {
+      const priceFields = dynamicField.data.content.fields as any;
+      return BigInt(priceFields.value || 3_500_000_000);
+    }
+
+    return 3_500_000_000n; // Fallback to $3.5
+  } catch (error) {
+    console.log('Error fetching price:', error);
+    return 3_500_000_000n; // Fallback to $3.5
   }
 }
 
