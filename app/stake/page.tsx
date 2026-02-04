@@ -76,9 +76,11 @@ export default function StakePage() {
   const { data: octsuiPrice } = useOctsuiPrice();
   const { positionId, position, isLoading: positionLoading, refetch: refetchPosition } = useStakePosition();
 
-  const exchangeRate = poolStats && poolStats.totalShares > 0n
-    ? Number(poolStats.totalStaked + poolStats.totalRewards) / Number(poolStats.totalShares)
-    : 1;
+  /* 
+   * Exchange Rate is fixed 1:1 in the contract (stake/unstake).
+   * Rewards are minted as new octSUI, so 1 octSUI = 1 SUI share always.
+   */
+  const exchangeRate = 1;
 
   const estimatedAPR = poolStats
     ? calculateEstimatedAPR(poolStats.rewardRateBps, undefined, poolStats.totalStaked)
