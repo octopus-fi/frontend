@@ -112,6 +112,8 @@ export interface PoolStats {
   totalShares: bigint;
   totalRewards: bigint;
   rewardRateBps: number;
+  /** Reward interval in milliseconds (default 5000ms) */
+  rewardIntervalMs: number;
   totalStaked: bigint;
 }
 

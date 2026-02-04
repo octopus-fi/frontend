@@ -286,6 +286,7 @@ export async function getPoolStats(
       totalShares: BigInt(fields.total_shares || 0),
       totalRewards: BigInt(fields.total_rewards || 0),
       rewardRateBps: parseInt(fields.reward_rate_per_interval || 0),
+      rewardIntervalMs: parseInt(fields.reward_interval_ms || 5000),
       totalStaked: parseBalance(fields.asset_balance),
     };
   } catch {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Card,
@@ -41,6 +41,7 @@ import {
   getUserCoins,
   calculateEstimatedAPR,
   buildClaimRewardsTransaction,
+  calculations,
 } from "@/sdk/index";
 import {
   useSignAndExecuteTransaction,
@@ -88,19 +89,94 @@ export default function StakePage() {
 
   // Check if claim is disabled due to AI auto-rebalance
   const isAutoRebalanceEnabled = position?.autoRebalanceEnabled ?? false;
-  const pendingRewards = position?.pendingRewards ?? 0n;
+
+  // Real-time reward simulation
+  const [simulationRewards, setSimulationRewards] = useState(0n);
+  // Track locally when we claimed to prevent "ghost rewards" from old on-chain data
+  const [localLastClaimTime, setLocalLastClaimTime] = useState(0);
+
+  useEffect(() => {
+    if (!position || !poolStats) {
+      setSimulationRewards(0n);
+      return;
+    }
+
+    // If we just claimed and on-chain data is stale (older than our claim), show 0
+    if (position.lastClaimTimeMs && position.lastClaimTimeMs < localLastClaimTime) {
+      setSimulationRewards(0n);
+      return;
+    }
+
+    // Initial set if we're not in a "just claimed" state
+    if (simulationRewards === 0n && position.pendingRewards > 0n) {
+      setSimulationRewards(position.pendingRewards);
+    }
+
+    const intervalId = setInterval(() => {
+      // Safety check again inside interval
+      if (position.lastClaimTimeMs && position.lastClaimTimeMs < localLastClaimTime) {
+        return;
+      }
+
+      if (!position.shares || position.shares === 0n) return;
+
+      const currentRewards = calculations.calculatePendingRewardsFromTime(
+        position.shares,
+        position.lastClaimTimeMs || Date.now(),
+        Date.now(),
+        poolStats.rewardRateBps,
+        poolStats.rewardIntervalMs
+      );
+
+      // Only update if we have more rewards than the stored pending state
+      if (currentRewards > position.pendingRewards) {
+        setSimulationRewards(currentRewards);
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [position, poolStats, localLastClaimTime]);
+
+  // Use simulated rewards for display, fallback to static if loading
+  const pendingRewards = simulationRewards > 0n ? simulationRewards : (position?.pendingRewards ?? 0n);
 
   const handleClaimRewards = async () => {
     if (!positionId || !account) return;
 
     setIsClaimPending(true);
+    console.log("Starting claim rewards...");
+
     try {
       const tx = buildClaimRewardsTransaction({ stakePositionId: positionId });
+      console.log("Transaction built:", tx);
 
       signAndExecute(
-        { transaction: tx },
+        {
+          transaction: tx,
+          chain: 'sui:testnet',
+        },
         {
           onSuccess: (result) => {
+            console.log("Claim transaction successful:", result);
+
+            // Explicitly verify effects if available
+            // @ts-ignore
+            if (result.effects?.status?.status === 'failure') {
+              // @ts-ignore
+              console.error("Transaction failed on-chain:", result.effects.status.error);
+              addNotification({
+                type: "error",
+                title: "Transaction Failed",
+                // @ts-ignore
+                message: result.effects.status.error || "Unknown on-chain error",
+              });
+              return;
+            }
+
+            // Optimistic update
+            setSimulationRewards(0n);
+            setLocalLastClaimTime(Date.now()); // Mark that we just claimed
+
             addNotification({
               type: "success",
               title: "Rewards Claimed!",
@@ -108,20 +184,24 @@ export default function StakePage() {
             });
             refetchPosition();
             queryClient.invalidateQueries({ queryKey: ["balance"] });
+            queryClient.invalidateQueries({ queryKey: ["stakePosition"] });
           },
           onError: (error) => {
+            console.error("Claim transaction error:", error);
             addNotification({
               type: "error",
               title: "Claim Failed",
-              message: error.message,
+              message: error.message || "Transaction rejected or failed",
             });
           },
           onSettled: () => {
-            setIsClaimPending(false);
+            // small delay to ensure UI updates don't flicker
+            setTimeout(() => setIsClaimPending(false), 500);
           },
         },
       );
     } catch (error: any) {
+      console.error("Claim build error:", error);
       addNotification({
         type: "error",
         title: "Transaction Error",

@@ -5,7 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
+import { Slider } from '@/components/ui/slider';
+import {
   useBorrowPreview,
   parseAmount,
   formatAmount,
@@ -18,9 +19,9 @@ import { useSignAndExecuteTransaction, useSuiClient, useCurrentAccount } from '@
 import { useUIStore } from '@/store/ui-store';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/lib/utils';
-import { 
-  TrendingUp, 
-  AlertCircle, 
+import {
+  TrendingUp,
+  AlertCircle,
   Info,
   ArrowDown,
   CheckCircle2,
@@ -35,9 +36,9 @@ interface BorrowFormProps {
   octsuiBalance: bigint;
 }
 
-export function BorrowForm({ 
-  vaultId, 
-  currentCollateral, 
+export function BorrowForm({
+  vaultId,
+  currentCollateral,
   currentDebt,
   maxBorrow,
   availableBorrow,
@@ -98,7 +99,7 @@ export function BorrowForm({
         await new Promise((resolve, reject) => {
           signAndExecute(
             { transaction: depositTx },
-            { 
+            {
               onSuccess: (result) => {
                 addNotification({
                   type: 'success',
@@ -106,7 +107,7 @@ export function BorrowForm({
                   message: `Deposited ${depositAmount} octSUI`,
                 });
                 resolve(result);
-              }, 
+              },
               onError: (error) => {
                 addNotification({
                   type: 'error',
@@ -224,31 +225,51 @@ export function BorrowForm({
         )}
 
         {/* Borrow Amount */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium">Borrow octUSD</label>
-            <span className="text-xs text-muted-foreground">
-              Available: {formatCurrency(availableBorrow)}
-            </span>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium">Borrow octUSD</label>
+              <span className="text-xs text-muted-foreground">
+                Available: {formatCurrency(Math.max(0, (preview?.maxBorrowUsd || maxBorrow) - (Number(currentDebt) / 1e9)))}
+              </span>
+            </div>
+            <div className="relative">
+              <Input
+                type="number"
+                value={borrowAmount}
+                onChange={(e) => setBorrowAmount(e.target.value)}
+                placeholder="0.00"
+                className="pr-20"
+                disabled={step === 'processing'}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+                onClick={handleMaxBorrow}
+                disabled={step === 'processing'}
+              >
+                MAX
+              </Button>
+            </div>
           </div>
-          <div className="relative">
-            <Input
-              type="number"
-              value={borrowAmount}
-              onChange={(e) => setBorrowAmount(e.target.value)}
-              placeholder="0.00"
-              className="pr-20"
-              disabled={step === 'processing'}
+
+          {/* Slider */}
+          <div className="space-y-3 pt-2">
+            <div className="flex justify-between text-xs text-muted-foreground px-1">
+              <span>Safe</span>
+              <span>Risky</span>
+            </div>
+            <Slider
+              defaultValue={[0]}
+              value={[parseFloat(borrowAmount) || 0]}
+              min={0}
+              max={Math.max(0.01, (preview?.maxBorrowUsd || maxBorrow) - (Number(currentDebt) / 1e9))}
+              step={0.01}
+              onValueChange={(values) => setBorrowAmount(values[0].toString())}
+              className="cursor-pointer"
             />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="absolute right-2 top-1/2 -translate-y-1/2"
-              onClick={handleMaxBorrow}
-              disabled={step === 'processing'}
-            >
-              MAX
-            </Button>
+            <div className="w-full h-1.5 rounded-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 opacity-50" />
           </div>
         </div>
 
@@ -258,11 +279,10 @@ export function BorrowForm({
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">New LTV</span>
               <div className="flex items-center gap-2">
-                <span className={`font-semibold ${
-                  preview.ltvPercent > 70 ? 'text-red-500' :
+                <span className={`font-semibold ${preview.ltvPercent > 70 ? 'text-red-500' :
                   preview.ltvPercent > 60 ? 'text-yellow-500' :
-                  'text-green-500'
-                }`}>
+                    'text-green-500'
+                  }`}>
                   {preview.ltvPercent.toFixed(1)}%
                 </span>
                 <span className="text-muted-foreground">/ 70%</span>
@@ -280,7 +300,7 @@ export function BorrowForm({
               <span className="text-muted-foreground">Status</span>
               <Badge variant={
                 preview.healthStatus === 'safe' ? 'success' :
-                preview.healthStatus === 'warning' ? 'warning' : 'danger'
+                  preview.healthStatus === 'warning' ? 'warning' : 'danger'
               }>
                 {preview.healthStatus}
               </Badge>
