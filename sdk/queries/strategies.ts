@@ -1,4 +1,4 @@
-import { SuiClient } from "@mysten/sui/client";
+import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 import { PACKAGE_ID } from "../constants";
 import { fetchStrategy, StrategyTemplate } from "@/lib/walrus/client";
 import { Strategy } from "@/types/index";
@@ -7,7 +7,7 @@ import { Strategy } from "@/types/index";
  * Fetch all registered strategies from on-chain events
  * Resolves the Walrus Blob content for each strategy
  */
-export async function getRegisteredStrategies(client: SuiClient): Promise<Strategy[]> {
+export async function getRegisteredStrategies(client: SuiJsonRpcClient): Promise<Strategy[]> {
     try {
         // 1. Query StrategyRegistered events
         const events = await client.queryEvents({

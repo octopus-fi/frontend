@@ -37,7 +37,7 @@ export default function DashboardPage() {
     octusdBalance,
     mocksuiBalance,
     octsuiPrice,
-    estimatedApy,
+    estimatedApr,
     isLoading,
   } = useDashboard();
 
@@ -46,7 +46,7 @@ export default function DashboardPage() {
     octsuiPrice > 0 ? (Number(collateral) / 1e9) * octsuiPrice : 0;
   const debtValue = Number(debt) / 1e9;
   const totalValue = collateralValue;
-  const netAPY = estimatedApy || 7.2;
+  const netAPY = estimatedApr || 7.2;
 
   // Show loading state
   if (isLoading) {
@@ -374,10 +374,10 @@ export default function DashboardPage() {
                               <div className="h-2 bg-muted rounded-full overflow-hidden">
                                 <div
                                   className={`h-full transition-all ${ltv > 70
-                                      ? "bg-red-500"
-                                      : ltv > 60
-                                        ? "bg-yellow-500"
-                                        : "gradient-to-r from-primary to-secondary"
+                                    ? "bg-red-500"
+                                    : ltv > 60
+                                      ? "bg-yellow-500"
+                                      : "gradient-to-r from-primary to-secondary"
                                     }`}
                                   style={{ width: `${Math.min(ltv, 100)}%` }}
                                 />
