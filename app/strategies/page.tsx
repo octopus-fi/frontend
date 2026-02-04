@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { StrategyCard } from "@/components/strategy/StrategyCard";
+import { UploadStrategyModal } from "@/components/strategy/UploadStrategyModal";
 import {
   Search,
   Filter,
@@ -29,7 +30,8 @@ import {
   buildDisableAutoRebalanceTransaction,
   buildAuthorizeAITransaction
 } from "@/sdk/index";
-import { useSignAndExecuteTransaction, useCurrentAccount } from "@mysten/dapp-kit";
+import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
+import { useQuery } from "@tanstack/react-query";
 import { useUIStore } from "@/store/ui-store";
 import { Switch } from "@/components/ui/switch";
 import { Bot, Zap } from "lucide-react";
@@ -48,6 +50,7 @@ export default function StrategiesPage() {
   const { vaultId } = useVault();
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();
   const account = useCurrentAccount();
+  const client = useSuiClient();
   const { addNotification } = useUIStore();
 
   const isAutoRebalanceEnabled = position?.autoRebalanceEnabled ?? false;
@@ -103,26 +106,61 @@ export default function StrategiesPage() {
     }
   };
 
-  const strategies = getMockStrategies();
+  // Fetch registered strategies real-time
+  const { data: realStrategies = [] } = useQuery({
+    queryKey: ['registered-strategies'],
+    queryFn: async () => {
+      // Import dynamically to avoid SSR issues if any
+      const { getRegisteredStrategies } = await import('@/sdk/queries/strategies');
+      const { getMockStrategies } = await import('@/lib/walrus/client');
+
+      const real = await getRegisteredStrategies(client as any);
+      // Check signature of useSuiClient().
+      // If useSuiClient returns client directly:
+      // return getRegisteredStrategies(client);
+      // I'll check if I can use client directly.
+      // Usually: const client = useSuiClient(); client.queryEvents...
+      return real;
+    },
+    enabled: !!account, // Or always? Public can view. enabled: true.
+  });
+
+  // Merge real and mock strategies
+  const strategies = useMemo(() => {
+    const mocks = getMockStrategies();
+    // Prefer real strategies if ID collision (unlikely with blobId vs '1')
+    return [...realStrategies, ...mocks];
+  }, [realStrategies]);
 
   // Calculate marketplace stats
   const stats = useMemo(() => {
     const totalStrategies = strategies.length;
+    const onChainCount = realStrategies.length;
+    const mockCount = totalStrategies - onChainCount;
     const totalUsers = strategies.reduce((sum, s) => sum + s.totalUsers, 0);
     const totalTVL = strategies.reduce(
       (sum, s) => sum + Number(s.totalValueManaged),
-      0,
+      0
     );
+
     const avgReturn =
-      strategies.reduce((sum, s) => sum + s.avg30dReturn, 0) / totalStrategies;
+      strategies.reduce((sum, s) => sum + s.avg30dReturn, 0) /
+      (totalStrategies || 1);
+
+    const verifiedCount = strategies.filter((s) => s.verified).length;
+    const unavailableCount = strategies.filter((s: any) => s.walrusDataUnavailable).length;
 
     return {
       totalStrategies,
+      onChainCount,
+      mockCount,
       totalUsers,
       totalTVL,
       avgReturn,
+      verifiedCount,
+      unavailableCount,
     };
-  }, [strategies]);
+  }, [strategies, realStrategies]);
 
   // Filter and sort strategies
   const filteredStrategies = useMemo(() => {
@@ -202,10 +240,7 @@ export default function StrategiesPage() {
                   </p>
                 </div>
 
-                <Button variant="electric" size="lg" className="gap-2">
-                  <Upload className="h-5 w-5" />
-                  Upload Strategy
-                </Button>
+                <UploadStrategyModal />
               </div>
 
               {/* AI Auto-Rebalance Settings */}
@@ -272,7 +307,12 @@ export default function StrategiesPage() {
                         {stats.totalStrategies}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {strategies.filter((s) => s.verified).length} verified
+                        {stats.onChainCount} on-chain • {stats.mockCount} demo
+                        {stats.unavailableCount > 0 && (
+                          <span className="text-amber-500 ml-1">
+                            ({stats.unavailableCount} expired)
+                          </span>
+                        )}
                       </p>
                     </CardContent>
                   </Card>

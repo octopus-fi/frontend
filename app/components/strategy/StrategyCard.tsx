@@ -51,10 +51,11 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
     >
       <Card className={cn(
         'glass border-primary/20 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden h-full',
-        !strategy.verified && 'border-amber-500/30'
+        !strategy.verified && 'border-amber-500/30',
+        strategy.walrusDataUnavailable && 'border-red-500/30 opacity-75'
       )}>
         {/* Verified Badge */}
-        {strategy.verified && (
+        {strategy.verified && !strategy.walrusDataUnavailable && (
           <div className="absolute top-4 right-4 z-10">
             <Badge variant="success" className="gap-1">
               <CheckCircle2 className="h-3 w-3" />
@@ -64,7 +65,7 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
         )}
 
         {/* Unverified Warning */}
-        {!strategy.verified && (
+        {!strategy.verified && !strategy.walrusDataUnavailable && (
           <div className="absolute top-4 right-4 z-10">
             <Badge variant="warning" className="gap-1">
               <AlertTriangle className="h-3 w-3" />
@@ -73,10 +74,20 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
           </div>
         )}
 
+        {/* Walrus Data Unavailable Warning */}
+        {strategy.walrusDataUnavailable && (
+          <div className="absolute top-4 right-4 z-10">
+            <Badge variant="danger" className="gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Data Expired
+            </Badge>
+          </div>
+        )}
+
         <CardHeader>
           <div className="pr-20">
             <CardTitle className="text-xl mb-2">
-              <Link 
+              <Link
                 href={`/dashboard/strategies/${strategy.id}`}
                 className="hover:text-primary transition-colors flex items-center gap-2"
               >
@@ -111,7 +122,7 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
                   dataKey="return"
                   stroke={
                     strategy.riskScore <= 3 ? '#10B981' :
-                    strategy.riskScore <= 6 ? '#F59E0B' : '#EF4444'
+                      strategy.riskScore <= 6 ? '#F59E0B' : '#EF4444'
                   }
                   strokeWidth={2}
                   dot={false}

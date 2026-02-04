@@ -8,6 +8,7 @@
  */
 
 import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
+export * from "./strategies";
 import {
   PACKAGE_ID,
   SHARED_OBJECTS,

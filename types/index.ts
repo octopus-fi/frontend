@@ -65,24 +65,27 @@ interface Strategy {
   creator: string;
   walrusBlobId: string;
   description: string;
-  
+
   // Parameters
   maxLtv: number;
   targetHealth: number;
   rebalanceThreshold: number;
   autoCompound: boolean;
-  
+
   // Performance
   avg30dReturn: number;
   totalUsers: number;
   riskScore: number;
   totalValueManaged: bigint;
-  
+
   // Metadata
   verified: boolean;
   createdAt: number;
   lastUpdated: number;
-  
+
+  // Optional flag for unavailable Walrus data
+  walrusDataUnavailable?: boolean;
+
   // Backtest preview (first 7 days)
   backtestPreview: Array<{
     date: string;

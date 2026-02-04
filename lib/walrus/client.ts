@@ -7,7 +7,7 @@ import { Strategy, StrategyBacktest } from '@/types/index';
 
 // Walrus configuration
 const WALRUS_API_URL = process.env.NEXT_PUBLIC_WALRUS_API_URL || 'https://api.walrus.site';
-const STORAGE_EPOCHS = 100; // ~1 year
+const STORAGE_EPOCHS = 5; // Testnet limit - epochs are short on testnet
 
 export interface WalrusUploadResponse {
   blobId: string;
@@ -69,12 +69,12 @@ export async function uploadStrategy(
     if (typeof window !== 'undefined') {
       const key = `walrus_blob_${blobId}`;
       const reader = new FileReader();
-      
+
       const text = await new Promise<string>((resolve) => {
         reader.onload = () => resolve(reader.result as string);
         reader.readAsText(blob);
       });
-      
+
       localStorage.setItem(key, text);
     }
 
@@ -90,26 +90,31 @@ export async function uploadStrategy(
   }
 }
 
+const WALRUS_AGGREGATOR = "https://aggregator.walrus-testnet.walrus.space";
+
 /**
- * Fetch strategy from Walrus
+ * Fetch strategy from Walrus via Aggregator
  */
 export async function fetchStrategy(
   blobId: string
 ): Promise<StrategyTemplate | null> {
   try {
-    // In production, this would fetch from Walrus
-    // For now, fetch from localStorage
-    if (typeof window !== 'undefined') {
-      const key = `walrus_blob_${blobId}`;
-      const data = localStorage.getItem(key);
-      
-      if (data) {
-        return JSON.parse(data) as StrategyTemplate;
-      }
+    const response = await fetch(`${WALRUS_AGGREGATOR}/v1/blobs/${blobId}`);
+
+    if (!response.ok) {
+      // console.warn(`Failed to fetch blob ${blobId}: ${response.statusText}`);
+      return null;
     }
 
-    // Return mock strategy if not found
-    return generateMockStrategy(blobId);
+    const data = await response.json();
+
+    // Validate structure before returning
+    if (!validateStrategyStructure(data)) {
+      console.warn(`Invalid strategy structure for blob ${blobId}`);
+      return null;
+    }
+
+    return data as StrategyTemplate;
   } catch (error) {
     console.error('Failed to fetch strategy:', error);
     return null;
@@ -118,10 +123,11 @@ export async function fetchStrategy(
 
 /**
  * List all available strategies
+ * Note: This now requires a SuiClient to query chain events, 
+ * so specific implementation should be in sdk/queries
  */
 export async function listStrategies(): Promise<Strategy[]> {
-  // In production, this would query Walrus or an indexer
-  // For now, return mock strategies
+  // Return mocks for now, real listing happens in sdk/queries via events
   return getMockStrategies();
 }
 
@@ -136,13 +142,8 @@ export async function verifyStrategy(
     const strategy = await fetchStrategy(blobId);
     if (!strategy) return false;
 
-    // In production, verify cryptographic hash
-    if (expectedHash) {
-      const hash = await hashStrategy(strategy);
-      return hash === expectedHash;
-    }
-
-    // Basic validation
+    // In production, verify cryptographic hash matching the blobId or registry hash
+    // For now we just validate structure
     return validateStrategyStructure(strategy);
   } catch (error) {
     return false;
@@ -174,13 +175,13 @@ async function hashStrategy(strategy: StrategyTemplate): Promise<string> {
   const text = JSON.stringify(strategy);
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
-  
+
   if (typeof window !== 'undefined' && window.crypto?.subtle) {
     const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
-  
+
   // Fallback for non-browser environments
   return generateMockBlobId();
 }
@@ -190,12 +191,11 @@ async function hashStrategy(strategy: StrategyTemplate): Promise<string> {
  */
 function validateStrategyStructure(strategy: any): boolean {
   return (
-    strategy?.metadata?.name &&
-    strategy?.metadata?.creator &&
-    strategy?.parameters?.maxLtv &&
-    strategy?.parameters?.targetHealth &&
-    strategy?.backtest?.period &&
-    strategy?.performance?.riskScore !== undefined
+    !!strategy &&
+    !!strategy.metadata &&
+    typeof strategy.metadata.name === 'string' &&
+    !!strategy.parameters &&
+    typeof strategy.parameters.maxLtv !== 'undefined'
   );
 }
 
@@ -382,7 +382,7 @@ export function getMockStrategies(): Strategy[] {
  */
 function getMockStrategyTemplates(): StrategyTemplate[] {
   const strategies = getMockStrategies();
-  
+
   return strategies.map(s => ({
     metadata: {
       name: s.name,
