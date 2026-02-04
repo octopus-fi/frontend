@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
     healthFactor,
     healthStatus,
     octsuiPrice,
-    estimatedApy,
+    estimatedApr,
     octsuiBalance,
     octusdBalance,
     mocksuiBalance,
@@ -171,7 +171,7 @@ export default function AnalyticsPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-3xl font-bold text-green-500">
-                        {formatPercent(estimatedApy / 100)}
+                        {formatPercent(estimatedApr / 100)}
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
                         From staking
@@ -434,7 +434,7 @@ export default function AnalyticsPage() {
                           Staking APY
                         </div>
                         <div className="text-2xl font-bold text-green-500">
-                          {formatPercent(estimatedApy / 100)}
+                          {formatPercent(estimatedApr / 100)}
                         </div>
                       </div>
                     </div>

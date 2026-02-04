@@ -242,10 +242,10 @@ export default function BorrowPage() {
               {/* Quick Actions */}
               <div className="flex gap-4 justify-center">
                 <Button variant="outline" asChild>
-                  <Link href="/dashboard/stake">Stake SUI First</Link>
+                  <Link href="/stake">Stake SUI First</Link>
                 </Button>
                 <Button variant="outline" asChild>
-                  <Link href="/dashboard/strategies">View Strategies</Link>
+                  <Link href="/strategies">View Strategies</Link>
                 </Button>
               </div>
             </div>

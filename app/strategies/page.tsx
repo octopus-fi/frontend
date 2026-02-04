@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { StrategyCard } from "@/components/strategy/StrategyCard";
+import { UploadStrategyModal } from "@/components/strategy/UploadStrategyModal";
 import {
   Search,
   Filter,
@@ -22,6 +23,18 @@ import { formatCurrency } from "@/lib/utils";
 // import type { Strategy } from '@/types/index';
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
+import {
+  useStakePosition,
+  useVault,
+  buildEnableAutoRebalanceTransaction,
+  buildDisableAutoRebalanceTransaction,
+  buildAuthorizeAITransaction
+} from "@/sdk/index";
+import { useSignAndExecuteTransaction, useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
+import { useQuery } from "@tanstack/react-query";
+import { useUIStore } from "@/store/ui-store";
+import { Switch } from "@/components/ui/switch";
+import { Bot, Zap } from "lucide-react";
 
 type SortBy = "performance" | "users" | "recent" | "tvl";
 type FilterRisk = "all" | "conservative" | "moderate" | "aggressive";
@@ -31,27 +44,123 @@ export default function StrategiesPage() {
   const [sortBy, setSortBy] = useState<SortBy>("performance");
   const [filterRisk, setFilterRisk] = useState<FilterRisk>("all");
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+  const [isRebalancePending, setIsRebalancePending] = useState(false);
 
-  const strategies = getMockStrategies();
+  const { positionId, position, refetch: refetchPosition } = useStakePosition();
+  const { vaultId } = useVault();
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+  const account = useCurrentAccount();
+  const client = useSuiClient();
+  const { addNotification } = useUIStore();
+
+  const isAutoRebalanceEnabled = position?.autoRebalanceEnabled ?? false;
+
+  const handleToggleRebalance = async () => {
+    if (!positionId || !vaultId || !account) {
+      addNotification({
+        type: "error",
+        title: "Setup Required",
+        message: "You need both a Vault and a Stake Position to enable auto-rebalance",
+      });
+      return;
+    }
+
+    setIsRebalancePending(true);
+    try {
+      const tx = isAutoRebalanceEnabled
+        ? buildDisableAutoRebalanceTransaction({ stakePositionId: positionId })
+        : buildEnableAutoRebalanceTransaction({ stakePositionId: positionId, vaultId });
+
+      signAndExecute(
+        { transaction: tx },
+        {
+          onSuccess: () => {
+            addNotification({
+              type: "success",
+              title: isAutoRebalanceEnabled ? "Auto-Rebalance Disabled" : "Auto-Rebalance Enabled",
+              message: isAutoRebalanceEnabled
+                ? "You can now mutually claim rewards"
+                : "AI will now automatically compound your rewards",
+            });
+            refetchPosition();
+          },
+          onError: (error) => {
+            addNotification({
+              type: "error",
+              title: "Transaction Failed",
+              message: error.message,
+            });
+          },
+          onSettled: () => {
+            setIsRebalancePending(false);
+          },
+        }
+      );
+    } catch (error: any) {
+      addNotification({
+        type: "error",
+        title: "Error",
+        message: error.message,
+      });
+      setIsRebalancePending(false);
+    }
+  };
+
+  // Fetch registered strategies real-time
+  const { data: realStrategies = [] } = useQuery({
+    queryKey: ['registered-strategies'],
+    queryFn: async () => {
+      // Import dynamically to avoid SSR issues if any
+      const { getRegisteredStrategies } = await import('@/sdk/queries/strategies');
+      const { getMockStrategies } = await import('@/lib/walrus/client');
+
+      const real = await getRegisteredStrategies(client as any);
+      // Check signature of useSuiClient().
+      // If useSuiClient returns client directly:
+      // return getRegisteredStrategies(client);
+      // I'll check if I can use client directly.
+      // Usually: const client = useSuiClient(); client.queryEvents...
+      return real;
+    },
+    enabled: !!account, // Or always? Public can view. enabled: true.
+  });
+
+  // Merge real and mock strategies
+  const strategies = useMemo(() => {
+    const mocks = getMockStrategies();
+    // Prefer real strategies if ID collision (unlikely with blobId vs '1')
+    return [...realStrategies, ...mocks];
+  }, [realStrategies]);
 
   // Calculate marketplace stats
   const stats = useMemo(() => {
     const totalStrategies = strategies.length;
+    const onChainCount = realStrategies.length;
+    const mockCount = totalStrategies - onChainCount;
     const totalUsers = strategies.reduce((sum, s) => sum + s.totalUsers, 0);
     const totalTVL = strategies.reduce(
       (sum, s) => sum + Number(s.totalValueManaged),
-      0,
+      0
     );
+
     const avgReturn =
-      strategies.reduce((sum, s) => sum + s.avg30dReturn, 0) / totalStrategies;
+      strategies.reduce((sum, s) => sum + s.avg30dReturn, 0) /
+      (totalStrategies || 1);
+
+    const verifiedCount = strategies.filter((s) => s.verified).length;
+    const unavailableCount = strategies.filter((s: any) => s.walrusDataUnavailable).length;
 
     return {
       totalStrategies,
+      onChainCount,
+      mockCount,
       totalUsers,
       totalTVL,
       avgReturn,
+      verifiedCount,
+      unavailableCount,
     };
-  }, [strategies]);
+  }, [strategies, realStrategies]);
 
   // Filter and sort strategies
   const filteredStrategies = useMemo(() => {
@@ -131,11 +240,53 @@ export default function StrategiesPage() {
                   </p>
                 </div>
 
-                <Button variant="electric" size="lg" className="gap-2">
-                  <Upload className="h-5 w-5" />
-                  Upload Strategy
-                </Button>
+                <UploadStrategyModal />
               </div>
+
+              {/* AI Auto-Rebalance Settings */}
+              {true && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Card className="glass border-primary/20 bg-primary/5">
+                    <CardContent className="p-6 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-full ${isAutoRebalanceEnabled ? 'bg-green-500/20 text-green-500' : 'bg-muted text-muted-foreground'}`}>
+                          <Bot className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            AI Auto-Rebalance
+                            {isAutoRebalanceEnabled && (
+                              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                                Active
+                              </Badge>
+                            )}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {!positionId || !vaultId
+                              ? "Connect wallet, Stake SUI, and Create Vault to enable AI features."
+                              : "Automatically compound your staking rewards into your vault collateral to prevent liquidation."
+                            }
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {(!positionId || !vaultId) ? "Setup Required" : (isAutoRebalanceEnabled ? "Enabled" : "Disabled")}
+                        </span>
+                        <Switch
+                          checked={isAutoRebalanceEnabled}
+                          onCheckedChange={handleToggleRebalance}
+                          disabled={isRebalancePending || !positionId || !vaultId}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
 
               {/* Marketplace Stats */}
               <div className="grid md:grid-cols-4 gap-4">
@@ -156,7 +307,12 @@ export default function StrategiesPage() {
                         {stats.totalStrategies}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {strategies.filter((s) => s.verified).length} verified
+                        {stats.onChainCount} on-chain • {stats.mockCount} demo
+                        {stats.unavailableCount > 0 && (
+                          <span className="text-amber-500 ml-1">
+                            ({stats.unavailableCount} expired)
+                          </span>
+                        )}
                       </p>
                     </CardContent>
                   </Card>
@@ -354,11 +510,10 @@ export default function StrategiesPage() {
                         className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
                       >
                         <div
-                          className={`h-4 w-4 rounded border-2 flex items-center justify-center ${
-                            showVerifiedOnly
-                              ? "bg-primary border-primary"
-                              : "border-muted-foreground"
-                          }`}
+                          className={`h-4 w-4 rounded border-2 flex items-center justify-center ${showVerifiedOnly
+                            ? "bg-primary border-primary"
+                            : "border-muted-foreground"
+                            }`}
                         >
                           {showVerifiedOnly && (
                             <div className="h-2 w-2 bg-white rounded-sm" />

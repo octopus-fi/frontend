@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   TrendingUp,
   Users,
@@ -13,10 +13,10 @@ import {
   ExternalLink,
   Copy,
   AlertTriangle,
-} from 'lucide-react';
-import { formatCurrency, formatPercent, cn } from '@/lib/utils';
-import type { Strategy } from '@/types/index';
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
+} from "lucide-react";
+import { formatCurrency, formatPercent, cn } from "@/lib/utils";
+import type { Strategy } from "@/types/index";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 interface StrategyCardProps {
   strategy: Strategy;
@@ -24,23 +24,27 @@ interface StrategyCardProps {
   onClone?: (strategyId: string) => void;
 }
 
-export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps) {
+export function StrategyCard({
+  strategy,
+  index = 0,
+  onClone,
+}: StrategyCardProps) {
   const getRiskColor = () => {
-    if (strategy.riskScore <= 3) return 'text-green-500';
-    if (strategy.riskScore <= 6) return 'text-yellow-500';
-    return 'text-red-500';
+    if (strategy.riskScore <= 3) return "text-green-500";
+    if (strategy.riskScore <= 6) return "text-yellow-500";
+    return "text-red-500";
   };
 
   const getRiskLabel = () => {
-    if (strategy.riskScore <= 3) return 'Conservative';
-    if (strategy.riskScore <= 6) return 'Moderate';
-    return 'Aggressive';
+    if (strategy.riskScore <= 3) return "Conservative";
+    if (strategy.riskScore <= 6) return "Moderate";
+    return "Aggressive";
   };
 
   const getRiskBadgeVariant = () => {
-    if (strategy.riskScore <= 3) return 'success' as const;
-    if (strategy.riskScore <= 6) return 'warning' as const;
-    return 'danger' as const;
+    if (strategy.riskScore <= 3) return "success" as const;
+    if (strategy.riskScore <= 6) return "warning" as const;
+    return "danger" as const;
   };
 
   return (
@@ -49,12 +53,15 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
     >
-      <Card className={cn(
-        'glass border-primary/20 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden h-full',
-        !strategy.verified && 'border-amber-500/30'
-      )}>
+      <Card
+        className={cn(
+          "glass border-primary/20 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden h-full",
+          !strategy.verified && "border-amber-500/30",
+          strategy.walrusDataUnavailable && "border-red-500/30 opacity-75",
+        )}
+      >
         {/* Verified Badge */}
-        {strategy.verified && (
+        {strategy.verified && !strategy.walrusDataUnavailable && (
           <div className="absolute top-4 right-4 z-10">
             <Badge variant="success" className="gap-1">
               <CheckCircle2 className="h-3 w-3" />
@@ -64,7 +71,7 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
         )}
 
         {/* Unverified Warning */}
-        {!strategy.verified && (
+        {!strategy.verified && !strategy.walrusDataUnavailable && (
           <div className="absolute top-4 right-4 z-10">
             <Badge variant="warning" className="gap-1">
               <AlertTriangle className="h-3 w-3" />
@@ -73,11 +80,21 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
           </div>
         )}
 
+        {/* Walrus Data Unavailable Warning */}
+        {strategy.walrusDataUnavailable && (
+          <div className="absolute top-4 right-4 z-10">
+            <Badge variant="danger" className="gap-1">
+              <AlertTriangle className="h-3 w-3" />
+              Data Expired
+            </Badge>
+          </div>
+        )}
+
         <CardHeader>
           <div className="pr-20">
             <CardTitle className="text-xl mb-2">
-              <Link 
-                href={`/dashboard/strategies/${strategy.id}`}
+              <Link
+                href={`/strategies/${strategy.id}`}
                 className="hover:text-primary transition-colors flex items-center gap-2"
               >
                 {strategy.name}
@@ -110,8 +127,11 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
                   type="monotone"
                   dataKey="return"
                   stroke={
-                    strategy.riskScore <= 3 ? '#10B981' :
-                    strategy.riskScore <= 6 ? '#F59E0B' : '#EF4444'
+                    strategy.riskScore <= 3
+                      ? "#10B981"
+                      : strategy.riskScore <= 6
+                        ? "#F59E0B"
+                        : "#EF4444"
                   }
                   strokeWidth={2}
                   dot={false}
@@ -123,24 +143,31 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
           {/* Performance Metrics */}
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-xs text-muted-foreground mb-1">30d Return</div>
-              <div className={cn(
-                'text-lg font-bold',
-                strategy.avg30dReturn >= 0 ? 'text-green-500' : 'text-red-500'
-              )}>
-                {strategy.avg30dReturn >= 0 ? '+' : ''}{formatPercent(strategy.avg30dReturn / 100)}
+              <div className="text-xs text-muted-foreground mb-1">
+                30d Return
+              </div>
+              <div
+                className={cn(
+                  "text-lg font-bold",
+                  strategy.avg30dReturn >= 0
+                    ? "text-green-500"
+                    : "text-red-500",
+                )}
+              >
+                {strategy.avg30dReturn >= 0 ? "+" : ""}
+                {formatPercent(strategy.avg30dReturn / 100)}
               </div>
             </div>
 
             <div className="text-center">
               <div className="text-xs text-muted-foreground mb-1">Max LTV</div>
-              <div className="text-lg font-bold">
-                {strategy.maxLtv}%
-              </div>
+              <div className="text-lg font-bold">{strategy.maxLtv}%</div>
             </div>
 
             <div className="text-center">
-              <div className="text-xs text-muted-foreground mb-1">Target Health</div>
+              <div className="text-xs text-muted-foreground mb-1">
+                Target Health
+              </div>
               <div className="text-lg font-bold text-primary">
                 {strategy.targetHealth.toFixed(1)}×
               </div>
@@ -150,24 +177,32 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
           {/* Strategy Details */}
           <div className="space-y-2 text-sm pt-2 border-t border-white/10">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Total Value Managed:</span>
+              <span className="text-muted-foreground">
+                Total Value Managed:
+              </span>
               <span className="font-semibold">
                 {formatCurrency(Number(strategy.totalValueManaged))}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Rebalance Threshold:</span>
+              <span className="text-muted-foreground">
+                Rebalance Threshold:
+              </span>
               <span className="font-semibold">
                 {strategy.rebalanceThreshold.toFixed(1)}×
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Auto-Compound:</span>
-              <span className={cn(
-                'font-semibold',
-                strategy.autoCompound ? 'text-green-500' : 'text-muted-foreground'
-              )}>
-                {strategy.autoCompound ? 'Enabled' : 'Disabled'}
+              <span
+                className={cn(
+                  "font-semibold",
+                  strategy.autoCompound
+                    ? "text-green-500"
+                    : "text-muted-foreground",
+                )}
+              >
+                {strategy.autoCompound ? "Enabled" : "Disabled"}
               </span>
             </div>
           </div>
@@ -177,19 +212,15 @@ export function StrategyCard({ strategy, index = 0, onClone }: StrategyCardProps
             <Shield className="h-3 w-3" />
             <span>Created by {strategy.creator.slice(0, 8)}...</span>
             <span>•</span>
-            <span>{Math.floor((Date.now() - strategy.createdAt) / 86400000)}d ago</span>
+            <span>
+              {Math.floor((Date.now() - strategy.createdAt) / 86400000)}d ago
+            </span>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
-            <Button
-              variant="electric"
-              className="flex-1 gap-2"
-              asChild
-            >
-              <Link href={`/dashboard/strategies/${strategy.id}`}>
-                View Details
-              </Link>
+            <Button variant="electric" className="flex-1 gap-2" asChild>
+              <Link href={`/strategies/${strategy.id}`}>View Details</Link>
             </Button>
             <Button
               variant="outline"

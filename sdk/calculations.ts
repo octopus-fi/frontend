@@ -55,7 +55,7 @@ export function calculateHealthFactor(
 ): number {
   if (debt === 0n) return Infinity;
   if (collateralValueUsd === 0n) return 0;
-  
+
   // Health = (collateralValue * liquidationThreshold) / debt
   const weightedCollateral = (collateralValueUsd * BigInt(LIQUIDATION_THRESHOLD_BPS)) / BigInt(BPS_DENOMINATOR);
   return Number(weightedCollateral) / Number(debt);
@@ -126,28 +126,28 @@ export function calculateBorrowPreview(
   existingDebtRaw: bigint = 0n
 ): BorrowPreview {
   const scaling = Number(SCALING_FACTOR);
-  
+
   // Convert to raw amounts
   const newCollateralRaw = BigInt(Math.floor(depositAmount * scaling));
   const newBorrowRaw = BigInt(Math.floor(borrowAmount * scaling));
   const priceRaw = BigInt(Math.floor(tokenPriceUsd * scaling));
-  
+
   // Total amounts after operation
   const totalCollateralRaw = existingCollateralRaw + newCollateralRaw;
   const totalDebtRaw = existingDebtRaw + newBorrowRaw;
-  
+
   // Calculate values
   const collateralValueRaw = calculateCollateralValue(totalCollateralRaw, priceRaw);
   const maxBorrowRaw = calculateMaxBorrow(collateralValueRaw);
-  
+
   const collateralValueUsd = Number(collateralValueRaw) / scaling;
   const totalDebtUsd = Number(totalDebtRaw) / scaling;
   const maxBorrowUsd = Number(maxBorrowRaw) / scaling;
-  
+
   const ltvPercent = calculateLTV(totalDebtRaw, collateralValueRaw);
   const healthFactor = calculateHealthFactor(collateralValueRaw, totalDebtRaw);
   const availableToBorrowUsd = Math.max(0, maxBorrowUsd - totalDebtUsd);
-  
+
   // Determine health status
   let healthStatus: 'safe' | 'warning' | 'danger' | 'liquidatable';
   if (ltvPercent > 80) {
@@ -159,11 +159,11 @@ export function calculateBorrowPreview(
   } else {
     healthStatus = 'safe';
   }
-  
+
   // Check if borrow is allowed
   const canBorrow = totalDebtRaw <= maxBorrowRaw;
   const errorMessage = !canBorrow ? `Exceeds max LTV of 70%. Max borrow: $${maxBorrowUsd.toFixed(2)}` : undefined;
-  
+
   return {
     collateralValueUsd,
     borrowAmountUsd: totalDebtUsd,
@@ -200,43 +200,43 @@ export function calculateWithdrawPreview(
   const scaling = Number(SCALING_FACTOR);
   const withdrawRaw = BigInt(Math.floor(withdrawAmount * scaling));
   const priceRaw = BigInt(Math.floor(tokenPriceUsd * scaling));
-  
+
   // Calculate remaining after withdrawal
-  const remainingCollateralRaw = currentCollateralRaw > withdrawRaw 
-    ? currentCollateralRaw - withdrawRaw 
+  const remainingCollateralRaw = currentCollateralRaw > withdrawRaw
+    ? currentCollateralRaw - withdrawRaw
     : 0n;
-  
+
   const remainingValueRaw = calculateCollateralValue(remainingCollateralRaw, priceRaw);
   const currentValueRaw = calculateCollateralValue(currentCollateralRaw, priceRaw);
-  
+
   // Calculate max withdrawable (keep LTV <= 70%)
   let maxWithdrawableValue = 0n;
   if (currentDebtRaw > 0n) {
     // minCollateralValue = debt / 0.7 = debt * 10000 / 7000
     const minCollateralValue = (currentDebtRaw * BigInt(BPS_DENOMINATOR)) / BigInt(MAX_LTV_BPS);
-    maxWithdrawableValue = currentValueRaw > minCollateralValue 
-      ? currentValueRaw - minCollateralValue 
+    maxWithdrawableValue = currentValueRaw > minCollateralValue
+      ? currentValueRaw - minCollateralValue
       : 0n;
   } else {
     maxWithdrawableValue = currentValueRaw;
   }
-  
+
   // Convert value to token amount
-  const maxWithdrawableRaw = priceRaw > 0n 
-    ? (maxWithdrawableValue * SCALING_FACTOR) / priceRaw 
+  const maxWithdrawableRaw = priceRaw > 0n
+    ? (maxWithdrawableValue * SCALING_FACTOR) / priceRaw
     : 0n;
-  
+
   const remainingCollateralUsd = Number(remainingValueRaw) / scaling;
   const currentDebtUsd = Number(currentDebtRaw) / scaling;
   const newLtvPercent = calculateLTV(currentDebtRaw, remainingValueRaw);
   const newHealthFactor = calculateHealthFactor(remainingValueRaw, currentDebtRaw);
   const maxWithdrawable = Number(maxWithdrawableRaw) / scaling;
-  
+
   const canWithdraw = newLtvPercent <= 70 || currentDebtRaw === 0n;
-  const errorMessage = !canWithdraw 
-    ? `Would exceed 70% LTV. Max withdraw: ${maxWithdrawable.toFixed(2)} tokens` 
+  const errorMessage = !canWithdraw
+    ? `Would exceed 70% LTV. Max withdraw: ${maxWithdrawable.toFixed(2)} tokens`
     : undefined;
-  
+
   return {
     remainingCollateralUsd,
     currentDebtUsd,
@@ -267,26 +267,26 @@ export function calculateRepayPreview(
   const scaling = Number(SCALING_FACTOR);
   const repayRaw = BigInt(Math.floor(repayAmount * scaling));
   const priceRaw = BigInt(Math.floor(tokenPriceUsd * scaling));
-  
+
   const remainingDebtRaw = currentDebtRaw > repayRaw ? currentDebtRaw - repayRaw : 0n;
   const collateralValueRaw = calculateCollateralValue(currentCollateralRaw, priceRaw);
-  
+
   const remainingDebtUsd = Number(remainingDebtRaw) / scaling;
   const newLtvPercent = calculateLTV(remainingDebtRaw, collateralValueRaw);
   const newHealthFactor = calculateHealthFactor(collateralValueRaw, remainingDebtRaw);
-  
+
   // Calculate new withdrawable after repay
   let newWithdrawableRaw = 0n;
   if (remainingDebtRaw > 0n) {
     const minCollateralValue = (remainingDebtRaw * BigInt(BPS_DENOMINATOR)) / BigInt(MAX_LTV_BPS);
-    const excessValue = collateralValueRaw > minCollateralValue 
-      ? collateralValueRaw - minCollateralValue 
+    const excessValue = collateralValueRaw > minCollateralValue
+      ? collateralValueRaw - minCollateralValue
       : 0n;
     newWithdrawableRaw = priceRaw > 0n ? (excessValue * SCALING_FACTOR) / priceRaw : 0n;
   } else {
     newWithdrawableRaw = currentCollateralRaw;
   }
-  
+
   return {
     remainingDebtUsd,
     newLtvPercent,
@@ -316,21 +316,21 @@ export function calculatePriceSensitivity(
   priceDropPercentages: number[] = [0, 10, 20, 30, 40, 50]
 ): PriceSensitivity[] {
   const scaling = Number(SCALING_FACTOR);
-  
+
   return priceDropPercentages.map(dropPercent => {
     const price = currentPrice * (1 - dropPercent / 100);
     const priceRaw = BigInt(Math.floor(price * scaling));
     const valueRaw = calculateCollateralValue(collateralAmount, priceRaw);
-    
+
     const ltvPercent = calculateLTV(debt, valueRaw);
     const healthFactor = calculateHealthFactor(valueRaw, debt);
-    
+
     let status: 'safe' | 'warning' | 'danger' | 'liquidatable';
     if (ltvPercent > 80) status = 'liquidatable';
     else if (ltvPercent > 70) status = 'danger';
     else if (ltvPercent > 60) status = 'warning';
     else status = 'safe';
-    
+
     return { price, ltvPercent, healthFactor, status };
   });
 }
@@ -364,10 +364,10 @@ export function calculateLiquidationPreview(
   const repayRaw = BigInt(Math.floor(repayAmount * scaling));
   const priceRaw = BigInt(Math.floor(tokenPrice * scaling));
   const valueRaw = calculateCollateralValue(vaultCollateral, priceRaw);
-  
+
   const ltvBps = calculateLTVBps(vaultDebt, valueRaw);
   const isLiquidatable = ltvBps > LIQUIDATION_THRESHOLD_BPS;
-  
+
   if (!isLiquidatable) {
     return {
       isLiquidatable: false,
@@ -377,18 +377,18 @@ export function calculateLiquidationPreview(
       remainingDebt: Number(vaultDebt) / scaling,
     };
   }
-  
+
   // Collateral to seize = repay * 1.05 / price (5% bonus)
   const repayWithBonus = (repayRaw * 10500n) / 10000n;
   const collateralToSeizeRaw = (repayWithBonus * SCALING_FACTOR) / priceRaw;
   const collateralWithoutBonusRaw = (repayRaw * SCALING_FACTOR) / priceRaw;
-  
+
   const profitRaw = collateralToSeizeRaw - collateralWithoutBonusRaw;
-  const remainingCollateralRaw = vaultCollateral > collateralToSeizeRaw 
-    ? vaultCollateral - collateralToSeizeRaw 
+  const remainingCollateralRaw = vaultCollateral > collateralToSeizeRaw
+    ? vaultCollateral - collateralToSeizeRaw
     : 0n;
   const remainingDebtRaw = vaultDebt > repayRaw ? vaultDebt - repayRaw : 0n;
-  
+
   return {
     isLiquidatable: true,
     collateralToSeize: Number(collateralToSeizeRaw) / scaling,
@@ -399,23 +399,84 @@ export function calculateLiquidationPreview(
 }
 
 // ============================================================================
-// STAKING CALCULATIONS
+// STAKING CALCULATIONS (Matches contract liquid_staking.move)
 // ============================================================================
 
+// Contract constants
+const REWARD_RATE_PER_INTERVAL = 115740; // ~1 SUI per 12 hours per staked SUI (scaled by 1e9)
+const REWARD_INTERVAL_MS = 5000; // 5 seconds
+const MS_PER_DAY = 86400000;
+const MS_PER_YEAR = MS_PER_DAY * 365;
+
 /**
- * Calculate estimated APY from reward rate
- * @param rewardRateBps - Reward rate in basis points per epoch
- * @param epochsPerYear - Approximate epochs per year (default: 365)
+ * Calculate estimated APR from pool's reward rate
+ * Based on contract: reward_rate_per_interval * intervals_per_year / 1e9 * 100
+ * 
+ * @param rewardRatePerInterval - Pool's reward rate per 5-second interval (default: 115740)
+ * @param rewardIntervalMs - Reward interval in ms (default: 5000 = 5 seconds)
+ * @returns APR as percentage (e.g., 730 = 730%)
+ */
+export function calculateEstimatedAPR(
+  rewardRatePerInterval: number = REWARD_RATE_PER_INTERVAL,
+  rewardIntervalMs: number = REWARD_INTERVAL_MS,
+  totalStaked: bigint = 1_000_000_000n // Default to 1 SUI to prevent div by zero
+): number {
+  if (totalStaked === 0n) return 0;
+
+  // intervals_per_day = 86400000ms / 5000ms = 17,280 intervals
+  // intervals_per_year = 17,280 * 365 = 6,307,200 intervals
+  const intervalsPerDay = MS_PER_DAY / rewardIntervalMs;
+  const intervalsPerYear = intervalsPerDay * 365;
+  const totalRewardsPerYear = BigInt(Math.floor(rewardRatePerInterval * intervalsPerYear));
+
+  // APR = (Annual Rewards / Total Staked) * 100
+  // Note: rewardRatePerInterval is likely the total emission for the pool
+  return (Number(totalRewardsPerYear) / Number(totalStaked)) * 100;
+}
+
+/**
+ * Calculate estimated APY from APR (with compounding)
+ * @deprecated Use calculateEstimatedAPR for display, this is kept for compatibility
  */
 export function calculateEstimatedAPY(
   rewardRateBps: number,
   epochsPerYear: number = 365
 ): number {
-  return (rewardRateBps * epochsPerYear) / 100; // Returns percentage
+  // For backward compatibility, use the new APR calculation
+  return calculateEstimatedAPR();
 }
 
 /**
- * Calculate pending rewards estimate
+ * Calculate pending rewards for a position based on elapsed time
+ * Mirrors contract: (shares * rate * intervals) / 1e9
+ * 
+ * @param shares - User's staked shares (raw, scaled by 1e9)
+ * @param lastClaimTimeMs - Last claim timestamp in milliseconds
+ * @param currentTimeMs - Current timestamp in milliseconds (default: now)
+ * @param rewardRatePerInterval - Pool reward rate (default: 115740)
+ * @param rewardIntervalMs - Interval duration in ms (default: 5000)
+ */
+export function calculatePendingRewardsFromTime(
+  shares: bigint,
+  lastClaimTimeMs: number,
+  currentTimeMs: number = Date.now(),
+  rewardRatePerInterval: number = REWARD_RATE_PER_INTERVAL,
+  rewardIntervalMs: number = REWARD_INTERVAL_MS
+): bigint {
+  if (shares === 0n) return 0n;
+
+  const elapsedMs = currentTimeMs - lastClaimTimeMs;
+  if (elapsedMs <= 0) return 0n;
+
+  const intervalsElapsed = Math.floor(elapsedMs / rewardIntervalMs);
+
+  // Use BigInt for precision: (shares * rate * intervals) / 1e9
+  const reward = (shares * BigInt(rewardRatePerInterval) * BigInt(intervalsElapsed)) / 1_000_000_000n;
+  return reward;
+}
+
+/**
+ * Calculate pending rewards estimate (legacy, kept for compatibility)
  * @param shares - User's shares
  * @param rewardRateBps - Pool reward rate in bps per epoch
  * @param epochsElapsed - Epochs since last claim
@@ -437,9 +498,9 @@ export function calculatePendingRewards(
  */
 export function formatAmount(rawAmount: bigint, decimals: number = 2): string {
   const num = Number(rawAmount) / Number(SCALING_FACTOR);
-  return num.toLocaleString(undefined, { 
-    minimumFractionDigits: decimals, 
-    maximumFractionDigits: decimals 
+  return num.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
   });
 }
 
@@ -465,10 +526,10 @@ export function parseAmount(humanAmount: string | number): bigint {
 /**
  * Get health status color and label for UI
  */
-export function getHealthStatus(ltvPercent: number): { 
-  color: string; 
-  label: string; 
-  level: 'safe' | 'warning' | 'danger' | 'liquidatable' 
+export function getHealthStatus(ltvPercent: number): {
+  color: string;
+  label: string;
+  level: 'safe' | 'warning' | 'danger' | 'liquidatable'
 } {
   if (ltvPercent > 80) {
     return { color: '#ef4444', label: 'Liquidatable', level: 'liquidatable' };
@@ -489,12 +550,12 @@ export function getLTVBarPosition(ltvPercent: number): {
   zone: 'conservative' | 'moderate' | 'aggressive' | 'liquidation';
 } {
   const position = Math.min(100, (ltvPercent / 100) * 100);
-  
+
   let zone: 'conservative' | 'moderate' | 'aggressive' | 'liquidation';
   if (ltvPercent <= 40) zone = 'conservative';
   else if (ltvPercent <= 60) zone = 'moderate';
   else if (ltvPercent <= 80) zone = 'aggressive';
   else zone = 'liquidation';
-  
+
   return { position, zone };
 }

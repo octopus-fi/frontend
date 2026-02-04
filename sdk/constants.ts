@@ -37,6 +37,10 @@ export const AI_AGENT = {
   CAPABILITY_ID: '0x1b55abf3daa4c53330e3b55e681267090fd561ec7c86905decbaa88fd56215c4',
 } as const;
 
+export const WALRUS = {
+  PACKAGE_ID: '0xfdc88f7d7cf30afab2f82e8380d11ee8f70efb90e863d1de8616fae1bb09ea77',
+} as const;
+
 // Sample Test Objects
 export const SAMPLE_OBJECTS = {
   VAULT_ID: '0x52d3644111f0cce9f27cfda9ec70bd55b1cbeb4d81a4f53a9bf145f41b183c68',
@@ -100,12 +104,16 @@ export interface PositionState {
   pendingRewards: bigint;
   autoRebalanceEnabled: boolean;
   linkedVaultId?: string;
+  /** Last claim timestamp in milliseconds (for reward calculation) */
+  lastClaimTimeMs?: number;
 }
 
 export interface PoolStats {
   totalShares: bigint;
   totalRewards: bigint;
   rewardRateBps: number;
+  /** Reward interval in milliseconds (default 5000ms) */
+  rewardIntervalMs: number;
   totalStaked: bigint;
 }
 

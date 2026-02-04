@@ -133,28 +133,31 @@ export function useStakePosition() {
   const client = useSuiClient();
   const account = useCurrentAccount();
 
-  const positionsQuery = useQuery({
-    queryKey: ["stakePositions", account?.address],
-    queryFn: () => queries.getUserStakePositions(client, account!.address),
+  const positionQuery = useQuery({
+    queryKey: ["stakePosition", account?.address],
+    queryFn: async () => {
+      // 1. Try finding shared position via events (primary method for shared objects)
+      const found = await queries.findUserStakePosition(client, account!.address);
+      if (found) return found;
+
+      // 2. Fallback: check owned objects (if position is owned)
+      const owned = await queries.getUserStakePositions(client, account!.address);
+      if (owned.length > 0) {
+        const state = await queries.getStakePositionState(client, owned[0]);
+        if (state) {
+          return { positionId: owned[0], state };
+        }
+      }
+      return null;
+    },
     enabled: !!account?.address,
   });
 
-  const positionId = positionsQuery.data?.[0]; // Get first position
-
-  const stateQuery = useQuery({
-    queryKey: ["stakePositionState", positionId],
-    queryFn: () => queries.getStakePositionState(client, positionId!),
-    enabled: !!positionId,
-  });
-
   return {
-    positionId,
-    position: stateQuery.data,
-    isLoading: positionsQuery.isLoading || stateQuery.isLoading,
-    refetch: () => {
-      positionsQuery.refetch();
-      stateQuery.refetch();
-    },
+    positionId: positionQuery.data?.positionId,
+    position: positionQuery.data?.state,
+    isLoading: positionQuery.isLoading,
+    refetch: positionQuery.refetch,
   };
 }
 
@@ -322,12 +325,27 @@ export function useCreateVault() {
       const result = await signAndExecute({ transaction: tx });
 
       // 2. Fetch the full transaction data including objectChanges
-      const fullTransaction = await suiClient.getTransactionBlock({
-        digest: result.digest,
-        options: {
-          showObjectChanges: true, // This is required to see created objects
-        },
-      });
+      // Add retry logic to handle initial indexing delay
+      let fullTransaction;
+      let retries = 5;
+      while (retries > 0) {
+        try {
+          fullTransaction = await suiClient.getTransactionBlock({
+            digest: result.digest,
+            options: {
+              showObjectChanges: true, // This is required to see created objects
+            },
+          });
+          break;
+        } catch (e) {
+          console.log(`Retry fetching transaction ${result.digest}... (${retries} left)`);
+          retries--;
+          if (retries === 0) throw e;
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+        }
+      }
+
+      if (!fullTransaction) throw new Error("Failed to fetch transaction details");
 
       // 3. Invalidate queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ["vaultId"] });
@@ -342,7 +360,7 @@ export function useCreateVault() {
       if (created && "objectId" in created) {
         return created.objectId;
       }
-      
+
       throw new Error("Vault object not found in transaction changes.");
     } catch (error) {
       console.error("Failed to create vault:", error);
@@ -399,8 +417,8 @@ export function useDashboard() {
 
     // Pool
     totalStaked: pool.data?.totalStaked ?? 0n,
-    estimatedApy: pool.data
-      ? calculations.calculateEstimatedAPY(pool.data.rewardRateBps)
+    estimatedApr: pool.data
+      ? calculations.calculateEstimatedAPR(pool.data.rewardRateBps, undefined, pool.data.totalStaked)
       : 0,
 
     // Loading
