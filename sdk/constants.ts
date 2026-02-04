@@ -100,6 +100,8 @@ export interface PositionState {
   pendingRewards: bigint;
   autoRebalanceEnabled: boolean;
   linkedVaultId?: string;
+  /** Last claim timestamp in milliseconds (for reward calculation) */
+  lastClaimTimeMs?: number;
 }
 
 export interface PoolStats {

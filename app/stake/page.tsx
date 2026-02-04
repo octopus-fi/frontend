@@ -13,6 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Waves,
   ArrowRight,
   Info,
@@ -20,16 +26,21 @@ import {
   Lock,
   Unlock,
   Zap,
+  Gift,
+  Bot,
 } from "lucide-react";
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import {
   useBalances,
   usePoolStats,
   useOctsuiPrice,
+  useStakePosition,
   formatAmount,
   parseAmount,
   COIN_TYPES,
   getUserCoins,
+  calculateEstimatedAPR,
+  buildClaimRewardsTransaction,
 } from "@/sdk/index";
 import {
   useSignAndExecuteTransaction,
@@ -48,6 +59,7 @@ import { Header } from "@/components/layout/Header";
 export default function StakePage() {
   const [mode, setMode] = useState<"stake" | "unstake">("stake");
   const [amount, setAmount] = useState("");
+  const [isClaimPending, setIsClaimPending] = useState(false);
 
   const { mutate: signAndExecute, isPending } = useSignAndExecuteTransaction();
   const client = useSuiClient();
@@ -62,9 +74,60 @@ export default function StakePage() {
   } = useBalances();
   const { data: poolStats, isLoading: poolLoading } = usePoolStats();
   const { data: octsuiPrice } = useOctsuiPrice();
+  const { positionId, position, isLoading: positionLoading, refetch: refetchPosition } = useStakePosition();
 
-  const exchangeRate = 0.9842; // Can be calculated from pool stats if needed
-  const estimatedAPY = poolStats ? (poolStats.rewardRateBps * 365) / 100 : 7.2;
+  const exchangeRate = poolStats && poolStats.totalShares > 0n
+    ? Number(poolStats.totalStaked + poolStats.totalRewards) / Number(poolStats.totalShares)
+    : 1;
+
+  const estimatedAPR = poolStats
+    ? calculateEstimatedAPR(poolStats.rewardRateBps, undefined, poolStats.totalStaked)
+    : 0;
+
+  // Check if claim is disabled due to AI auto-rebalance
+  const isAutoRebalanceEnabled = position?.autoRebalanceEnabled ?? false;
+  const pendingRewards = position?.pendingRewards ?? 0n;
+
+  const handleClaimRewards = async () => {
+    if (!positionId || !account) return;
+
+    setIsClaimPending(true);
+    try {
+      const tx = buildClaimRewardsTransaction({ stakePositionId: positionId });
+
+      signAndExecute(
+        { transaction: tx },
+        {
+          onSuccess: (result) => {
+            addNotification({
+              type: "success",
+              title: "Rewards Claimed!",
+              message: `Successfully claimed ${formatAmount(pendingRewards)} octSUI`,
+            });
+            refetchPosition();
+            queryClient.invalidateQueries({ queryKey: ["balance"] });
+          },
+          onError: (error) => {
+            addNotification({
+              type: "error",
+              title: "Claim Failed",
+              message: error.message,
+            });
+          },
+          onSettled: () => {
+            setIsClaimPending(false);
+          },
+        },
+      );
+    } catch (error: any) {
+      addNotification({
+        type: "error",
+        title: "Transaction Error",
+        message: error.message,
+      });
+      setIsClaimPending(false);
+    }
+  };
 
   const handleStake = async () => {
     if (!amount || !account) return;
@@ -272,7 +335,7 @@ export default function StakePage() {
                         <TrendingUp className="h-4 w-4 text-green-500" />
                       </div>
                       <div className="text-2xl font-bold text-green-500">
-                        {formatPercent(estimatedAPY / 100)}
+                        {formatPercent(estimatedAPR / 100)}
                       </div>
                     </CardContent>
                   </Card>
@@ -339,22 +402,20 @@ export default function StakePage() {
                         <div className="flex gap-2 p-1 bg-muted rounded-lg">
                           <button
                             onClick={() => setMode("stake")}
-                            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
-                              mode === "stake"
-                                ? "bg-primary text-primary-foreground shadow-lg"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
+                            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${mode === "stake"
+                              ? "bg-primary text-primary-foreground shadow-lg"
+                              : "text-muted-foreground hover:text-foreground"
+                              }`}
                           >
                             <Lock className="h-4 w-4 inline mr-2" />
                             Stake
                           </button>
                           <button
                             onClick={() => setMode("unstake")}
-                            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${
-                              mode === "unstake"
-                                ? "bg-primary text-primary-foreground shadow-lg"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
+                            className={`flex-1 px-4 py-2 rounded-md font-medium transition-all ${mode === "unstake"
+                              ? "bg-primary text-primary-foreground shadow-lg"
+                              : "text-muted-foreground hover:text-foreground"
+                              }`}
                           >
                             <Unlock className="h-4 w-4 inline mr-2" />
                             Unstake
@@ -460,6 +521,79 @@ export default function StakePage() {
 
                 {/* Info Sidebar */}
                 <div className="space-y-6">
+                  {/* Rewards Card */}
+                  {positionId && (
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.55 }}
+                    >
+                      <Card className="glass border-green-500/20 bg-green-500/5">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Gift className="h-5 w-5 text-green-500" />
+                              Your Rewards
+                            </div>
+                            {isAutoRebalanceEnabled && (
+                              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20 flex items-center gap-1">
+                                <Bot className="h-3 w-3" /> Auto
+                              </Badge>
+                            )}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-1">
+                            <span className="text-sm text-muted-foreground">Accrued Rewards</span>
+                            <div className="text-2xl font-bold text-green-500">
+                              {formatAmount(pendingRewards)} octSUI
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              ~{formatCurrency(Number(pendingRewards) / 1e9 * (octsuiPrice || 0))} USD
+                            </p>
+                          </div>
+
+                          <div className="pt-2">
+                            {isAutoRebalanceEnabled ? (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="w-full">
+                                      <Button
+                                        className="w-full gap-2 opacity-80"
+                                        variant="outline"
+                                        disabled
+                                      >
+                                        <Lock className="h-4 w-4" />
+                                        Claim Rewards
+                                      </Button>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Disable AI auto-rebalance to claim manually</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : (
+                              <Button
+                                className="w-full gap-2"
+                                variant="electric"
+                                onClick={handleClaimRewards}
+                                disabled={isClaimPending || pendingRewards === 0n}
+                              >
+                                {isClaimPending ? (
+                                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                ) : (
+                                  <Zap className="h-4 w-4" />
+                                )}
+                                Claim Rewards
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )}
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -505,7 +639,7 @@ export default function StakePage() {
                             Earn Rewards
                           </h4>
                           <p className="text-sm text-muted-foreground ml-8">
-                            Automatically earn ~{estimatedAPY.toFixed(1)}% APY
+                            Automatically earn ~{estimatedAPR.toFixed(1)}% APR
                             on your stake
                           </p>
                         </div>

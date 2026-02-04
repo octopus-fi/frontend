@@ -191,8 +191,69 @@ export async function getStakePositionState(
       pendingRewards: BigInt(fields.pending_rewards || 0),
       autoRebalanceEnabled: fields.auto_rebalance_enabled || false,
       linkedVaultId: fields.linked_vault_id?.fields?.some || undefined,
+      lastClaimTimeMs: parseInt(fields.last_claim_time_ms || '0'),
     };
   } catch {
+    return null;
+  }
+}
+
+/**
+ * Find user's stake position from shared objects
+ * Since StakePosition is a shared object, we need to query events or use known position ID
+ * 
+ * @param client - Sui JSON RPC client
+ * @param userAddress - User's address
+ * @returns Position ID and state if found
+ */
+export async function findUserStakePosition(
+  client: SuiJsonRpcClient,
+  userAddress: string,
+): Promise<{ positionId: string; state: PositionState } | null> {
+  try {
+    // Query StakeEvent to find user's stake position
+    // The StakeEvent contains the position creation info
+    const events = await client.queryEvents({
+      query: {
+        MoveEventType: `${PACKAGE_ID}::liquid_staking::StakeEvent`,
+      },
+      limit: 50,
+      order: 'descending',
+    });
+
+    // Find the most recent stake event for this user
+    for (const eventData of events.data) {
+      const event = eventData.parsedJson as any;
+      if (event?.user === userAddress) {
+        // We found a stake event for this user
+        // Now we need to get the position - it was created in the same transaction
+        // Get transaction effects to find created objects
+        const txn = await client.getTransactionBlock({
+          digest: eventData.id.txDigest,
+          options: { showObjectChanges: true },
+        });
+
+        const createdPosition = txn.objectChanges?.find(
+          (change) =>
+            change.type === 'created' &&
+            change.objectType.includes('StakePosition')
+        );
+
+        if (createdPosition && 'objectId' in createdPosition) {
+          const state = await getStakePositionState(client, createdPosition.objectId);
+          if (state) {
+            return {
+              positionId: createdPosition.objectId,
+              state,
+            };
+          }
+        }
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.log('Error finding stake position:', error);
     return null;
   }
 }

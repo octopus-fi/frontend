@@ -35,7 +35,9 @@ export {
 
   // Staking calculations
   calculateEstimatedAPY,
+  calculateEstimatedAPR,
   calculatePendingRewards,
+  calculatePendingRewardsFromTime,
 
   // Formatting utilities
   formatAmount,
@@ -53,6 +55,7 @@ export {
   getUserVaults,
   getUserStakePositions,
   getStakePositionState,
+  findUserStakePosition,
   getPoolStats,
   getOctsuiPrice,
   getOctsuiPriceUsd,

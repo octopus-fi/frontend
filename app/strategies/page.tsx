@@ -22,6 +22,17 @@ import { formatCurrency } from "@/lib/utils";
 // import type { Strategy } from '@/types/index';
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
+import {
+  useStakePosition,
+  useVault,
+  buildEnableAutoRebalanceTransaction,
+  buildDisableAutoRebalanceTransaction,
+  buildAuthorizeAITransaction
+} from "@/sdk/index";
+import { useSignAndExecuteTransaction, useCurrentAccount } from "@mysten/dapp-kit";
+import { useUIStore } from "@/store/ui-store";
+import { Switch } from "@/components/ui/switch";
+import { Bot, Zap } from "lucide-react";
 
 type SortBy = "performance" | "users" | "recent" | "tvl";
 type FilterRisk = "all" | "conservative" | "moderate" | "aggressive";
@@ -31,6 +42,66 @@ export default function StrategiesPage() {
   const [sortBy, setSortBy] = useState<SortBy>("performance");
   const [filterRisk, setFilterRisk] = useState<FilterRisk>("all");
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+  const [isRebalancePending, setIsRebalancePending] = useState(false);
+
+  const { positionId, position, refetch: refetchPosition } = useStakePosition();
+  const { vaultId } = useVault();
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+  const account = useCurrentAccount();
+  const { addNotification } = useUIStore();
+
+  const isAutoRebalanceEnabled = position?.autoRebalanceEnabled ?? false;
+
+  const handleToggleRebalance = async () => {
+    if (!positionId || !vaultId || !account) {
+      addNotification({
+        type: "error",
+        title: "Setup Required",
+        message: "You need both a Vault and a Stake Position to enable auto-rebalance",
+      });
+      return;
+    }
+
+    setIsRebalancePending(true);
+    try {
+      const tx = isAutoRebalanceEnabled
+        ? buildDisableAutoRebalanceTransaction({ stakePositionId: positionId })
+        : buildEnableAutoRebalanceTransaction({ stakePositionId: positionId, vaultId });
+
+      signAndExecute(
+        { transaction: tx },
+        {
+          onSuccess: () => {
+            addNotification({
+              type: "success",
+              title: isAutoRebalanceEnabled ? "Auto-Rebalance Disabled" : "Auto-Rebalance Enabled",
+              message: isAutoRebalanceEnabled
+                ? "You can now mutually claim rewards"
+                : "AI will now automatically compound your rewards",
+            });
+            refetchPosition();
+          },
+          onError: (error) => {
+            addNotification({
+              type: "error",
+              title: "Transaction Failed",
+              message: error.message,
+            });
+          },
+          onSettled: () => {
+            setIsRebalancePending(false);
+          },
+        }
+      );
+    } catch (error: any) {
+      addNotification({
+        type: "error",
+        title: "Error",
+        message: error.message,
+      });
+      setIsRebalancePending(false);
+    }
+  };
 
   const strategies = getMockStrategies();
 
@@ -136,6 +207,51 @@ export default function StrategiesPage() {
                   Upload Strategy
                 </Button>
               </div>
+
+              {/* AI Auto-Rebalance Settings */}
+              {true && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <Card className="glass border-primary/20 bg-primary/5">
+                    <CardContent className="p-6 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className={`p-3 rounded-full ${isAutoRebalanceEnabled ? 'bg-green-500/20 text-green-500' : 'bg-muted text-muted-foreground'}`}>
+                          <Bot className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            AI Auto-Rebalance
+                            {isAutoRebalanceEnabled && (
+                              <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/20">
+                                Active
+                              </Badge>
+                            )}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {!positionId || !vaultId
+                              ? "Connect wallet, Stake SUI, and Create Vault to enable AI features."
+                              : "Automatically compound your staking rewards into your vault collateral to prevent liquidation."
+                            }
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {(!positionId || !vaultId) ? "Setup Required" : (isAutoRebalanceEnabled ? "Enabled" : "Disabled")}
+                        </span>
+                        <Switch
+                          checked={isAutoRebalanceEnabled}
+                          onCheckedChange={handleToggleRebalance}
+                          disabled={isRebalancePending || !positionId || !vaultId}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
 
               {/* Marketplace Stats */}
               <div className="grid md:grid-cols-4 gap-4">
@@ -354,11 +470,10 @@ export default function StrategiesPage() {
                         className="flex items-center gap-2 text-sm hover:text-primary transition-colors"
                       >
                         <div
-                          className={`h-4 w-4 rounded border-2 flex items-center justify-center ${
-                            showVerifiedOnly
-                              ? "bg-primary border-primary"
-                              : "border-muted-foreground"
-                          }`}
+                          className={`h-4 w-4 rounded border-2 flex items-center justify-center ${showVerifiedOnly
+                            ? "bg-primary border-primary"
+                            : "border-muted-foreground"
+                            }`}
                         >
                           {showVerifiedOnly && (
                             <div className="h-2 w-2 bg-white rounded-sm" />
