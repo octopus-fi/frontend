@@ -333,12 +333,14 @@ export default function StakePage() {
 
       let finalAmount = amountRaw;
       let isCapped = false;
+      let capReason = "";
 
       // Check Pool Liquidity: Auto-cap if requested amount exceeds pool liquidity
       if (poolStats && poolStats.totalStaked < amountRaw) {
         console.warn(`Unstake amount ${amountRaw} exceeds pool liquidity ${poolStats.totalStaked}. Auto-capping.`);
         finalAmount = poolStats.totalStaked;
         isCapped = true;
+        capReason = "Pool Liquidity";
       }
 
       // Build transaction
