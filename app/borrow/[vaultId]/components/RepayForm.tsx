@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   calculateRepayPreview,
   parseAmount,
   formatAmount,
@@ -19,7 +19,7 @@ import { useSignAndExecuteTransaction, useSuiClient, useCurrentAccount } from '@
 import { useUIStore } from '@/store/ui-store';
 import { useQueryClient } from '@tanstack/react-query';
 import { formatCurrency } from '@/lib/utils';
-import { 
+import {
   CheckCircle2,
   Info,
   TrendingDown,
@@ -34,11 +34,11 @@ interface RepayFormProps {
   octusdBalance: bigint;
 }
 
-export function RepayForm({ 
-  vaultId, 
+export function RepayForm({
+  vaultId,
   currentCollateral,
-  currentDebt, 
-  octusdBalance 
+  currentDebt,
+  octusdBalance
 }: RepayFormProps) {
   const [repayAmount, setRepayAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -91,10 +91,30 @@ export function RepayForm({
         return;
       }
 
-      const repayTx = buildRepayWithAmountTransaction({
-        vaultId,
-        octusdCoinId: coins[0].id,
-        amount: parseAmount(repayAmount),
+      // Build transaction with coin merging
+      const { Transaction } = await import('@mysten/sui/transactions');
+      const { PACKAGE_ID, SHARED_OBJECTS, MODULE_NAMES } = await import('@/sdk/constants');
+      const repayTx = new Transaction();
+
+      // Merge all octUSD coins if there are multiple
+      let primaryCoin = repayTx.object(coins[0].id);
+      if (coins.length > 1) {
+        const coinsToMerge = coins.slice(1).map(c => repayTx.object(c.id));
+        repayTx.mergeCoins(primaryCoin, coinsToMerge);
+      }
+
+      // Split the exact amount to repay
+      const [coinToRepay] = repayTx.splitCoins(primaryCoin, [repayTx.pure.u64(parseAmount(repayAmount))]);
+
+      // Call repay
+      repayTx.moveCall({
+        target: `${PACKAGE_ID}::${MODULE_NAMES.VAULT_MANAGER}::repay`,
+        typeArguments: [COIN_TYPES.OCTSUI],
+        arguments: [
+          repayTx.object(SHARED_OBJECTS.BANK_ID),
+          repayTx.object(vaultId),
+          coinToRepay,
+        ],
       });
 
       await new Promise((resolve, reject) => {
@@ -272,11 +292,10 @@ export function RepayForm({
 
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">New LTV</span>
-              <span className={`font-semibold ${
-                preview.newLtvPercent < 50 ? 'text-green-500' :
+              <span className={`font-semibold ${preview.newLtvPercent < 50 ? 'text-green-500' :
                 preview.newLtvPercent < 65 ? 'text-yellow-500' :
-                'text-red-500'
-              }`}>
+                  'text-red-500'
+                }`}>
                 {preview.newLtvPercent.toFixed(1)}%
               </span>
             </div>

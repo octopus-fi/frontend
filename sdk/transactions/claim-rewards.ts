@@ -45,15 +45,16 @@ export interface ClaimRewardsParams {
  */
 export function buildClaimRewardsTransaction(params: ClaimRewardsParams): Transaction {
   const tx = new Transaction();
-  
+
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULE_NAMES.LIQUID_STAKING}::claim_rewards`,
     typeArguments: [COIN_TYPES.MOCKSUI],
     arguments: [
       tx.object(SHARED_OBJECTS.STAKING_POOL_ID),
       tx.object(params.stakePositionId),
+      tx.object('0x6'), // Clock object - required for timestamp-based rewards
     ],
   });
-  
+
   return tx;
 }

@@ -90,10 +90,29 @@ export function BorrowForm({
           return;
         }
 
-        const depositTx = buildDepositCollateralWithAmountTransaction({
-          vaultId,
-          octsuiCoinId: coins[0].id,
-          amount: parseAmount(depositAmount),
+        // Build transaction with coin merging
+        const { Transaction } = await import('@mysten/sui/transactions');
+        const { PACKAGE_ID, MODULE_NAMES } = await import('@/sdk/constants');
+        const depositTx = new Transaction();
+
+        // Merge all octSUI coins if there are multiple
+        let primaryCoin = depositTx.object(coins[0].id);
+        if (coins.length > 1) {
+          const coinsToMerge = coins.slice(1).map(c => depositTx.object(c.id));
+          depositTx.mergeCoins(primaryCoin, coinsToMerge);
+        }
+
+        // Split the exact amount to deposit
+        const [coinToDeposit] = depositTx.splitCoins(primaryCoin, [depositTx.pure.u64(parseAmount(depositAmount))]);
+
+        // Call deposit_collateral
+        depositTx.moveCall({
+          target: `${PACKAGE_ID}::${MODULE_NAMES.VAULT_MANAGER}::deposit_collateral`,
+          typeArguments: [COIN_TYPES.OCTSUI],
+          arguments: [
+            depositTx.object(vaultId),
+            coinToDeposit,
+          ],
         });
 
         await new Promise((resolve, reject) => {

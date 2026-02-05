@@ -231,9 +231,31 @@ export default function StakePage() {
       }
 
       const amountRaw = parseAmount(amount);
-      const tx = buildStakeWithAmountTransaction({
-        coinObjectId: coins[0].id,
-        amount: amountRaw,
+
+      // Build transaction with coin merging for multiple coin objects
+      const { Transaction } = await import('@mysten/sui/transactions');
+      const { PACKAGE_ID, SHARED_OBJECTS, MODULE_NAMES } = await import('@/sdk/constants');
+      const tx = new Transaction();
+
+      // Merge all MOCKSUI coins if there are multiple
+      let primaryCoin = tx.object(coins[0].id);
+      if (coins.length > 1) {
+        const coinsToMerge = coins.slice(1).map(c => tx.object(c.id));
+        tx.mergeCoins(primaryCoin, coinsToMerge);
+      }
+
+      // Split the exact amount to stake
+      const [coinToStake] = tx.splitCoins(primaryCoin, [tx.pure.u64(amountRaw)]);
+
+      // Call stake with Clock parameter
+      tx.moveCall({
+        target: `${PACKAGE_ID}::${MODULE_NAMES.LIQUID_STAKING}::stake`,
+        typeArguments: [COIN_TYPES.MOCKSUI],
+        arguments: [
+          tx.object(SHARED_OBJECTS.STAKING_POOL_ID),
+          coinToStake,
+          tx.object('0x6'), // Clock object
+        ],
       });
 
       signAndExecute(
@@ -287,19 +309,87 @@ export default function StakePage() {
       }
 
       const amountRaw = parseAmount(amount);
-      const tx = buildUnstakeWithAmountTransaction({
-        octsuiCoinId: coins[0].id,
-        amount: amountRaw,
+      const { getTotalBalance, mergeAndSplitCoins } = await import('@/sdk/index');
+
+      // Check balance first
+      const totalBalance = getTotalBalance(coins);
+
+      if (totalBalance < amountRaw) {
+        addNotification({
+          type: "error",
+          title: "Insufficient Balance",
+          message: `You have ${formatAmount(totalBalance)} octSUI, but tried to unstake ${formatAmount(amountRaw)}`,
+        });
+        return;
+      }
+
+      console.log('UNSTAKE DEBUG:', {
+        amountRaw: amountRaw.toString(),
+        totalBalance: totalBalance.toString(),
+        poolLimit: poolStats ? poolStats.totalStaked.toString() : 'undefined',
+        shareLimit: position ? position.shares.toString() : 'undefined',
+        positionId: positionId
+      });
+
+      let finalAmount = amountRaw;
+      let isCapped = false;
+
+      // Check Pool Liquidity: Auto-cap if requested amount exceeds pool liquidity
+      if (poolStats && poolStats.totalStaked < amountRaw) {
+        console.warn(`Unstake amount ${amountRaw} exceeds pool liquidity ${poolStats.totalStaked}. Auto-capping.`);
+        finalAmount = poolStats.totalStaked;
+        isCapped = true;
+      }
+
+      // Build transaction
+      const { Transaction } = await import('@mysten/sui/transactions');
+      const { SHARED_OBJECTS, MODULE_NAMES } = await import('@/sdk/constants');
+      const { mergeCoinsInTransaction } = await import('@/sdk/utils/coins');
+      const tx = new Transaction();
+
+      let coinToUnstake;
+
+      // OPTIMIZATION: If unstaking entire balance (and it's within liquidity), skip split
+      if (totalBalance <= finalAmount) {
+        coinToUnstake = mergeCoinsInTransaction(tx, coins);
+      } else {
+        // Otherwise split the specific (potentially capped) amount
+        coinToUnstake = mergeAndSplitCoins(tx, coins, finalAmount);
+      }
+
+      if (!positionId) {
+        addNotification({
+          type: "error",
+          title: "No stake position found",
+          message: "You must have a stake position to unstake.",
+        });
+        return;
+      }
+
+      // Call unstake
+      tx.moveCall({
+        target: `${COIN_TYPES.OCTSUI.split('::')[0]}::liquid_staking::unstake`,
+        typeArguments: [COIN_TYPES.MOCKSUI],
+        arguments: [
+          tx.object(SHARED_OBJECTS.STAKING_POOL_ID),
+          tx.object(positionId),
+          coinToUnstake,
+          tx.object('0x6'), // Clock
+        ],
       });
 
       signAndExecute(
         { transaction: tx },
         {
           onSuccess: (result) => {
+            const message = isCapped
+              ? `Unstaked ${formatAmount(finalAmount)} octSUI (${capReason} reached)`
+              : `Unstaked ${formatAmount(finalAmount)} octSUI`;
+
             addNotification({
-              type: "success",
-              title: "Unstaking Successful!",
-              message: `Unstaked ${amount} octSUI`,
+              type: isCapped ? "warning" : "success",
+              title: isCapped ? "Partial Unstake Successful" : "Unstaking Successful!",
+              message,
             });
             setAmount("");
             queryClient.invalidateQueries({ queryKey: ["balance"] });
@@ -326,10 +416,31 @@ export default function StakePage() {
     if (!amount) return 0;
     const input = parseFloat(amount);
     if (isNaN(input)) return 0;
+
     if (mode === "stake") {
       return input * exchangeRate;
     } else {
-      return input / exchangeRate;
+      // Unstake mode
+      let output = input / exchangeRate;
+
+      // Auto-cap simulation for UI
+      if (poolStats) {
+        try {
+          const amountRaw = parseAmount(amount);
+          let limit = poolStats.totalStaked;
+          if (position && position.shares < limit) {
+            limit = position.shares;
+          }
+
+          if (amountRaw > limit) {
+            return Number(limit) / 1e9;
+          }
+        } catch (e) {
+          // invalid input, ignore
+        }
+      }
+
+      return output;
     }
   };
 
@@ -513,14 +624,34 @@ export default function StakePage() {
                                   ? "Stake Amount"
                                   : "Unstake Amount"}
                               </label>
-                              <span className="text-sm text-muted-foreground">
-                                Balance:{" "}
-                                {formatAmount(
-                                  mode === "stake"
-                                    ? mocksuiBalance
-                                    : octsuiBalance,
-                                )}
-                              </span>
+                              {(() => {
+                                if (mode === 'unstake' && poolStats) {
+                                  const poolLimit = Number(poolStats.totalStaked) / 1e9;
+                                  const shareLimit = position ? Number(position.shares) / 1e9 : Infinity;
+                                  const effectiveLimit = Math.min(poolLimit, shareLimit);
+                                  const currentBalance = Number(octsuiBalance) / 1e9;
+
+                                  if (currentBalance > effectiveLimit) {
+                                    return (
+                                      <div className="flex flex-col items-end text-xs">
+                                        <span className="text-amber-500 font-bold">Unstakable: {formatAmount(BigInt(Math.floor(effectiveLimit * 1e9)))}</span>
+                                        <span>Total: {formatAmount(octsuiBalance)}</span>
+                                      </div>
+                                    );
+                                  }
+                                }
+
+                                return (
+                                  <span>
+                                    Balance:{" "}
+                                    {formatAmount(
+                                      mode === "stake"
+                                        ? mocksuiBalance
+                                        : octsuiBalance,
+                                    )}
+                                  </span>
+                                );
+                              })()}
                             </div>
                             <div className="relative">
                               <Input
@@ -534,7 +665,23 @@ export default function StakePage() {
                                 variant="ghost"
                                 size="sm"
                                 className="absolute right-2 top-1/2 -translate-y-1/2"
-                                onClick={() => setAmount(maxAmount.toString())}
+                                onClick={() => {
+                                  let val = maxAmount;
+                                  // Smart MAX: If unstaking, cap to min(balance, poolLimit, shareLimit)
+                                  if (mode === "unstake" && poolStats) {
+                                    const poolLimit = Number(poolStats.totalStaked) / 1e9;
+                                    const shareLimit = position ? Number(position.shares) / 1e9 : Infinity;
+
+                                    // Take the smallest of all constraints
+                                    let limit = poolLimit;
+                                    if (shareLimit < limit) limit = shareLimit;
+
+                                    if (val > limit) {
+                                      val = limit;
+                                    }
+                                  }
+                                  setAmount(val.toString());
+                                }}
                               >
                                 MAX
                               </Button>
