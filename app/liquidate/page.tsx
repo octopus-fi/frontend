@@ -23,73 +23,12 @@ import {
 import { formatCurrency, formatPercent } from "@/lib/utils";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { useSuiClient } from "@mysten/dapp-kit";
+import { useQuery } from "@tanstack/react-query";
+import { getLiquidatableVaults, getOraclePrice, type LiquidatableVaultData } from "@/sdk/queries/liquidation";
 
 type FilterUrgency = "all" | "critical" | "high" | "medium";
 type SortBy = "profit" | "urgency" | "debt" | "health";
-
-// Mock liquidatable vaults
-const mockLiquidatableVaults = [
-  {
-    id: "0xabc123",
-    owner: "0xdef456",
-    collateral: 5000000000000n, // 5,000 octSUI
-    debt: 14500000000n, // 14,500 octUSD
-    health: 1.05,
-    liquidationPrice: 2.9,
-    currentPrice: 2.8,
-    profit: 420,
-    urgency: "critical" as const,
-    timeToLiquidation: 15,
-  },
-  {
-    id: "0x789xyz",
-    owner: "0x123abc",
-    collateral: 8000000000000n, // 8,000 octSUI
-    debt: 21000000000n, // 21,000 octUSD
-    health: 1.08,
-    liquidationPrice: 2.7,
-    currentPrice: 2.8,
-    profit: 672,
-    urgency: "critical" as const,
-    timeToLiquidation: 45,
-  },
-  {
-    id: "0xdef789",
-    owner: "0x456def",
-    collateral: 3000000000000n, // 3,000 octSUI
-    debt: 7800000000n, // 7,800 octUSD
-    health: 1.09,
-    liquidationPrice: 2.5,
-    currentPrice: 2.8,
-    profit: 252,
-    urgency: "high" as const,
-    timeToLiquidation: 90,
-  },
-  {
-    id: "0xghi012",
-    owner: "0x789ghi",
-    collateral: 12000000000000n, // 12,000 octSUI
-    debt: 31000000000n, // 31,000 octUSD
-    health: 1.095,
-    liquidationPrice: 2.6,
-    currentPrice: 2.8,
-    profit: 1008,
-    urgency: "high" as const,
-    timeToLiquidation: 120,
-  },
-  {
-    id: "0xjkl345",
-    owner: "0x012jkl",
-    collateral: 6000000000000n, // 6,000 octSUI
-    debt: 15500000000n, // 15,500 octUSD
-    health: 1.099,
-    liquidationPrice: 2.4,
-    currentPrice: 2.8,
-    profit: 504,
-    urgency: "medium" as const,
-    timeToLiquidation: 180,
-  },
-];
 
 export default function LiquidatePage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,33 +36,58 @@ export default function LiquidatePage() {
   const [sortBy, setSortBy] = useState<SortBy>("urgency");
   const [showCalculator, setShowCalculator] = useState(false);
 
+  const client = useSuiClient();
+
+  // Fetch liquidatable vaults from on-chain
+  const { data: vaults = [], isLoading, error, refetch } = useQuery({
+    queryKey: ["liquidatableVaults"],
+    queryFn: () => getLiquidatableVaults(client),
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 10000,
+  });
+
+  // Fetch current oracle price
+  const { data: currentPrice = 0 } = useQuery({
+    queryKey: ["oraclePrice"],
+    queryFn: () => getOraclePrice(client),
+    refetchInterval: 15000,
+  });
+
+  // Convert vault data to display format
+  const displayVaults = useMemo(() => {
+    return vaults.map((vault: LiquidatableVaultData) => ({
+      id: vault.id,
+      owner: vault.owner,
+      collateral: vault.collateral,
+      debt: vault.debt,
+      health: vault.healthFactor,
+      liquidationPrice: currentPrice * 0.8, // Approx liquidation price
+      currentPrice: currentPrice,
+      profit: vault.estimatedProfit,
+      urgency: vault.urgency,
+      timeToLiquidation: vault.healthFactor < 1.05 ? 15 : vault.healthFactor < 1.08 ? 60 : 180,
+    }));
+  }, [vaults, currentPrice]);
+
   // Calculate stats
   const stats = useMemo(() => {
-    const totalOpportunities = mockLiquidatableVaults.length;
-    const totalProfit = mockLiquidatableVaults.reduce(
-      (sum, v) => sum + v.profit,
-      0,
-    );
-    const totalDebt = mockLiquidatableVaults.reduce(
-      (sum, v) => sum + Number(v.debt) / 1e6,
-      0,
-    );
-    const criticalCount = mockLiquidatableVaults.filter(
-      (v) => v.urgency === "critical",
-    ).length;
+    const totalOpportunities = displayVaults.length;
+    const totalProfit = displayVaults.reduce((sum: number, v: any) => sum + v.profit, 0);
+    const totalDebt = displayVaults.reduce((sum: number, v: any) => sum + Number(v.debt) / 1e9, 0);
+    const criticalCount = displayVaults.filter((v: any) => v.urgency === "critical").length;
 
     return {
       totalOpportunities,
       totalProfit,
       totalDebt,
       criticalCount,
-      avgProfit: totalProfit / totalOpportunities,
+      avgProfit: totalOpportunities > 0 ? totalProfit / totalOpportunities : 0,
     };
-  }, []);
+  }, [displayVaults]);
 
   // Filter and sort vaults
   const filteredVaults = useMemo(() => {
-    let filtered = mockLiquidatableVaults;
+    let filtered = displayVaults;
 
     // Search filter
     if (searchQuery) {
@@ -157,7 +121,7 @@ export default function LiquidatePage() {
     });
 
     return sorted;
-  }, [searchQuery, filterUrgency, sortBy]);
+  }, [displayVaults, searchQuery, filterUrgency, sortBy]);
 
   return (
     <div className="flex h-screen overflow-hidden">

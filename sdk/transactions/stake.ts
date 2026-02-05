@@ -41,16 +41,17 @@ export interface StakeParams {
  */
 export function buildStakeTransaction(params: StakeParams): Transaction {
   const tx = new Transaction();
-  
+
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULE_NAMES.LIQUID_STAKING}::stake`,
     typeArguments: [COIN_TYPES.MOCKSUI],
     arguments: [
       tx.object(SHARED_OBJECTS.STAKING_POOL_ID),
       tx.object(params.coinObjectId),
+      tx.object('0x6'), // Clock object - required for timestamp-based rewards
     ],
   });
-  
+
   return tx;
 }
 
@@ -67,20 +68,21 @@ export interface StakeWithAmountParams {
 
 export function buildStakeWithAmountTransaction(params: StakeWithAmountParams): Transaction {
   const tx = new Transaction();
-  
+
   // Split the coin to get exact amount
   const [coinToStake] = tx.splitCoins(tx.object(params.coinObjectId), [
     tx.pure.u64(params.amount),
   ]);
-  
+
   tx.moveCall({
     target: `${PACKAGE_ID}::${MODULE_NAMES.LIQUID_STAKING}::stake`,
     typeArguments: [COIN_TYPES.MOCKSUI],
     arguments: [
       tx.object(SHARED_OBJECTS.STAKING_POOL_ID),
       coinToStake,
+      tx.object('0x6'), // Clock object - required for timestamp-based rewards
     ],
   });
-  
+
   return tx;
 }

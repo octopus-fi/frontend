@@ -15,6 +15,7 @@ import {
   Flame,
 } from 'lucide-react';
 import { formatCurrency, formatPercent, truncateAddress, cn } from '@/lib/utils';
+import { useSuiClient, useCurrentAccount, useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 
 interface LiquidatableVaultProps {
   vault: {
@@ -37,7 +38,8 @@ export function LiquidatableVault({ vault, index = 0, onLiquidate }: Liquidatabl
   const [isLiquidating, setIsLiquidating] = useState(false);
 
   const collateralValue = Number(vault.collateral) / 1e9;
-  const debtValue = Number(vault.debt) / 1e6;
+  // Fix: Debt is 9 decimals (1e9), not 6
+  const debtValue = Number(vault.debt) / 1e9;
 
   const getUrgencyColor = () => {
     if (vault.urgency === 'critical') return 'text-red-500';
@@ -57,12 +59,124 @@ export function LiquidatableVault({ vault, index = 0, onLiquidate }: Liquidatabl
     return 'Medium';
   };
 
+  const client = useSuiClient();
+  const account = useCurrentAccount();
+  const { mutate: signAndExecute } = useSignAndExecuteTransaction();
+
   const handleLiquidate = async () => {
+    if (!account) return;
     setIsLiquidating(true);
-    // Simulate liquidation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsLiquidating(false);
-    onLiquidate?.(vault.id);
+
+    try {
+      // 1. Get user's octUSD coins
+      const { getUserCoins } = await import('@/sdk/queries');
+      const { COIN_TYPES, PACKAGE_ID, MODULE_NAMES, SHARED_OBJECTS } = await import('@/sdk/constants');
+
+      const coins = await getUserCoins(client, account.address, COIN_TYPES.OCTUSD);
+
+      if (coins.length === 0) {
+        alert("No octUSD found in your wallet to perform liquidation");
+        setIsLiquidating(false);
+        return;
+      }
+
+      // 2. Calculate amount to repay 
+      const { getTotalBalance, mergeAndSplitCoins } = await import('@/sdk/utils/coins');
+      const totalBalance = getTotalBalance(coins);
+      const debtAmount = vault.debt;
+
+      // Calculate Max Repayable based on Collateral
+      // Constraint: (repay * 1.05) / price <= collateral
+      // Therefore: repay <= (collateral * price) / 1.05
+
+      // We use BigInt for precision. Price is number, so convert to scaled BigInt (1e9)
+      const priceScaled = BigInt(Math.floor(vault.currentPrice * 1_000_000_000));
+      const SCALING = 1_000_000_000n;
+
+      // Formula: (collateral * priceScaled * 10000) / (10500 * SCALING)
+      // Factors: 10000 (bps basis), 10500 (105% coverage requirement)
+      const maxRepayableByCollateral = (vault.collateral * priceScaled * 10000n) / (10500n * SCALING);
+
+      // Deduct a tiny safety buffer (e.g. 1000 units) to avoid rounding issues
+      const safeMaxRepayable = maxRepayableByCollateral > 1000n ? maxRepayableByCollateral - 1000n : 0n;
+
+      // Repay amount is min(UserBalance, VaultDebt, SafeMaxRepayable)
+      let repayAmount = debtAmount;
+      let capReason = "";
+
+      if (totalBalance < repayAmount) {
+        repayAmount = totalBalance;
+        capReason = "User Balance";
+      }
+
+      if (safeMaxRepayable < repayAmount) {
+        repayAmount = safeMaxRepayable;
+        capReason = "Collateral Limit";
+      }
+
+      console.log('Liquidation Calc:', {
+        debt: debtAmount.toString(),
+        collateral: vault.collateral.toString(),
+        price: vault.currentPrice,
+        maxRepayable: safeMaxRepayable.toString(),
+        finalRepay: repayAmount.toString(),
+        capReason
+      });
+
+      // buffer for safety? Contract burns exact coin value.
+      // const repayAmount = totalBalance < debtAmount ? totalBalance : debtAmount;
+
+      if (repayAmount === 0n) {
+        alert("Amount to repay is zero");
+        setIsLiquidating(false);
+        return;
+      }
+
+      // 3. Build Transaction
+      const { Transaction } = await import('@mysten/sui/transactions');
+      const tx = new Transaction();
+
+      // Merge and split exact amount
+      const paymentCoin = mergeAndSplitCoins(tx, coins, repayAmount);
+
+      const proofBytes = new TextEncoder().encode(''); // No proof needed for hackathon demo
+
+      tx.moveCall({
+        target: `${PACKAGE_ID}::${MODULE_NAMES.LIQUIDATION}::liquidate`,
+        typeArguments: [COIN_TYPES.OCTSUI],
+        arguments: [
+          tx.object(SHARED_OBJECTS.BANK_ID),
+          tx.object(vault.id),
+          tx.object(SHARED_OBJECTS.ORACLE_ID),
+          paymentCoin,
+          tx.pure.vector('u8', Array.from(proofBytes)),
+        ],
+      });
+
+      // 4. Reset web state logic (no-op for now as we redirect or refetch)
+
+      // 5. Execute
+      signAndExecute(
+        { transaction: tx },
+        {
+          onSuccess: (result) => {
+            console.log("Liquidation successful:", result);
+            onLiquidate?.(vault.id); // Trigger UI update
+            // Optional: Add toast notification here
+          },
+          onError: (error) => {
+            console.error("Liquidation failed:", error);
+            alert(`Liquidation failed: ${error.message}`);
+          },
+          onSettled: () => {
+            setIsLiquidating(false);
+          }
+        },
+      );
+    } catch (error: any) {
+      console.error("Error building transaction:", error);
+      setIsLiquidating(false);
+    }
   };
 
   const profitPercentage = (vault.profit / (collateralValue * vault.currentPrice)) * 100;
@@ -76,15 +190,15 @@ export function LiquidatableVault({ vault, index = 0, onLiquidate }: Liquidatabl
       <Card className={cn(
         'glass border-2 transition-all hover:shadow-xl group relative overflow-hidden',
         vault.urgency === 'critical' ? 'border-red-500/50 bg-red-500/5' :
-        vault.urgency === 'high' ? 'border-orange-500/50 bg-orange-500/5' :
-        'border-yellow-500/50 bg-yellow-500/5'
+          vault.urgency === 'high' ? 'border-orange-500/50 bg-orange-500/5' :
+            'border-yellow-500/50 bg-yellow-500/5'
       )}>
         {/* Urgency Indicator */}
         <div className={cn(
           'absolute top-0 left-0 right-0 h-1',
           vault.urgency === 'critical' ? 'bg-red-500 animate-pulse' :
-          vault.urgency === 'high' ? 'bg-orange-500' :
-          'bg-yellow-500'
+            vault.urgency === 'high' ? 'bg-orange-500' :
+              'bg-yellow-500'
         )} />
 
         {/* Urgency Badge */}
@@ -182,7 +296,7 @@ export function LiquidatableVault({ vault, index = 0, onLiquidate }: Liquidatabl
             <div className="flex-1">
               <div className="text-sm font-medium">Time to Liquidation</div>
               <div className={cn('text-xs', getUrgencyColor())}>
-                {vault.timeToLiquidation < 60 
+                {vault.timeToLiquidation < 60
                   ? `~${vault.timeToLiquidation} minutes`
                   : `~${Math.floor(vault.timeToLiquidation / 60)} hours ${vault.timeToLiquidation % 60} minutes`
                 }

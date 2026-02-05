@@ -47,6 +47,14 @@ export {
   getLTVBarPosition,
 } from "./calculations";
 
+// Coin Utilities (for handling multiple coin objects)
+export {
+  mergeCoinsInTransaction,
+  mergeAndSplitCoins,
+  getTotalBalance,
+  validateSufficientBalance,
+} from "./utils/coins";
+
 // Query functions (for reading on-chain state)
 export * as queries from "./queries";
 export {
@@ -64,6 +72,12 @@ export {
   getUserOctusdBalance,
   getUserMocksuiBalance,
   isAIAuthorizedForVault,
+  // Liquidation queries
+  getLiquidatableVaults,
+  getVaultLiquidationDetails,
+  getOraclePrice,
+  calculateVaultLiquidationStatus,
+  calculateLiquidationProfit,
 } from "./queries";
 
 // Transaction Builders
