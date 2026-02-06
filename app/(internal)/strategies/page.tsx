@@ -53,7 +53,7 @@ export default function StrategiesPage() {
   const client = useSuiClient();
   const { addNotification } = useUIStore();
 
-  const { isConnected, requestStrategies } = useAgentSocket();
+  const { isConnected, requestStrategies, selectStrategy } = useAgentSocket();
   const agentStrategies = useAgentStore((state) => state.agentStrategies);
 
   // Request strategies from agent on connect
@@ -117,57 +117,32 @@ export default function StrategiesPage() {
   };
 
   // Fetch registered strategies real-time
-  const { data: realStrategies = [] } = useQuery({
-    queryKey: ['registered-strategies'],
-    queryFn: async () => {
-      // Import dynamically to avoid SSR issues if any
-      const { getRegisteredStrategies } = await import('@/sdk/queries/strategies');
-
-      const real = await getRegisteredStrategies(client as any);
-      // Check signature of useSuiClient().
-      // If useSuiClient returns client directly:
-      // return getRegisteredStrategies(client);
-      // I'll check if I can use client directly.
-      // Usually: const client = useSuiClient(); client.queryEvents...
-      return real;
-    },
-    enabled: !!account, // Or always? Public can view. enabled: true.
-  });
+  // Refactored to use local strategies only for the hackathon scope
+  // const { data: realStrategies = [] } = useQuery({ ... });
 
   // Merge real and agent strategies
   const strategies = useMemo(() => {
-    // Unique strategies by name or ID
-    const all = [...realStrategies, ...agentStrategies];
+    // Use agent strategies only since we are using local mode
+    return [...agentStrategies];
+  }, [agentStrategies]);
 
-    // Filter out duplicates (prefer real over agent if same name)
-    const seen = new Set();
-    return all.filter(s => {
-      const key = s.name.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }, [realStrategies, agentStrategies]);
 
-  console.log("realStrategies", realStrategies);
-  console.log("agentStrategies", agentStrategies);
-  console.log("strategies", strategies);
-  // Calculate marketplace stats
+  // ... (stats calculation)
   const stats = useMemo(() => {
     const totalStrategies = strategies.length;
-    const onChainCount = realStrategies.length;
-    const totalUsers = strategies.reduce((sum, s) => sum + s.totalUsers, 0);
+    const onChainCount = 0; // strategies.length; 
+    const totalUsers = strategies.reduce((sum, s) => sum + (s.totalUsers || 0), 0);
     const totalTVL = strategies.reduce(
-      (sum, s) => sum + Number(s.totalValueManaged),
+      (sum, s) => sum + Number(s.totalValueManaged || 0),
       0
     );
 
     const avgReturn =
-      strategies.reduce((sum, s) => sum + s.avg30dReturn, 0) /
+      strategies.reduce((sum, s) => sum + (s.avg30dReturn || 0), 0) /
       (totalStrategies || 1);
 
     const verifiedCount = strategies.filter((s) => s.verified).length;
-    const unavailableCount = strategies.filter((s: any) => s.walrusDataUnavailable).length;
+    const unavailableCount = 0; // No walrus checking
 
     return {
       totalStrategies,
@@ -178,7 +153,24 @@ export default function StrategiesPage() {
       verifiedCount,
       unavailableCount,
     };
-  }, [strategies, realStrategies]);
+  }, [strategies]);
+
+  // ...
+
+  const handleSelectStrategy = (id: string, name: string) => {
+    // Logic for selecting strategy
+    console.log("Selected strategy:", id);
+    selectStrategy(id); // Use the hook to send event 
+    addNotification({
+      type: "success",
+      title: "Strategy Selected",
+      message: `Strategy ${name} has been selected for simulation.`
+    });
+  }
+
+  // ...
+
+
 
   // Filter and sort strategies
   const filteredStrategies = useMemo(() => {
@@ -314,12 +306,7 @@ export default function StrategiesPage() {
                   {stats.totalStrategies}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {stats.onChainCount} on-chain marketplace strategies
-                  {stats.unavailableCount > 0 && (
-                    <span className="text-amber-500 ml-1">
-                      ({stats.unavailableCount} expired)
-                    </span>
-                  )}
+                  Active Agent Strategies
                 </p>
               </CardContent>
             </Card>
@@ -549,7 +536,7 @@ export default function StrategiesPage() {
                 key={strategy.id}
                 strategy={strategy}
                 index={index}
-                onClone={(id) => console.log("Clone strategy:", id)}
+                onClone={(id) => handleSelectStrategy(id, strategy.name)}
               />
             ))}
           </div>
@@ -580,7 +567,7 @@ export default function StrategiesPage() {
         )}
 
         {/* Info Section */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-1 gap-6">
           <Card className="glass border-primary/20">
             <CardContent className="p-6">
               <h3 className="font-semibold text-lg mb-3">How It Works</h3>
@@ -594,8 +581,7 @@ export default function StrategiesPage() {
                       Browse Strategies
                     </div>
                     <p className="text-muted-foreground">
-                      Explore community-created strategies with proven
-                      track records
+                      Explore agent-based strategies tailored for different risk appetites.
                     </p>
                   </div>
                 </div>
@@ -606,11 +592,10 @@ export default function StrategiesPage() {
                   </div>
                   <div>
                     <div className="font-medium mb-1">
-                      Review Performance
+                      Simulate & Monitor
                     </div>
                     <p className="text-muted-foreground">
-                      Analyze backtest results and risk metrics stored on
-                      Walrus
+                      Watch the AI agent simulate strategy execution in real-time on your dashboard.
                     </p>
                   </div>
                 </div>
@@ -621,43 +606,13 @@ export default function StrategiesPage() {
                   </div>
                   <div>
                     <div className="font-medium mb-1">
-                      Clone to Your Vault
+                      Activate
                     </div>
                     <p className="text-muted-foreground">
-                      One-click clone any strategy to your vault with AI
-                      management
+                      Enable the strategy on your vault for automated wealth management.
                     </p>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="glass border-primary/20 bg-primary/5">
-            <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                Why Walrus Storage?
-              </h3>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <p>
-                  <strong className="text-foreground">Immutable:</strong>{" "}
-                  Strategies can't be changed after upload
-                </p>
-                <p>
-                  <strong className="text-foreground">Verifiable:</strong>{" "}
-                  All backtest results are cryptographically proven
-                </p>
-                <p>
-                  <strong className="text-foreground">Permanent:</strong>{" "}
-                  Your strategy lives forever on decentralized storage
-                </p>
-                <p>
-                  <strong className="text-foreground">
-                    Transparent:
-                  </strong>{" "}
-                  Full strategy code and parameters are public
-                </p>
               </div>
             </CardContent>
           </Card>

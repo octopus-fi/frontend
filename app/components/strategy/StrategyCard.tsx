@@ -57,11 +57,10 @@ export function StrategyCard({
         className={cn(
           "glass border-primary/20 hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden h-full",
           !strategy.verified && "border-amber-500/30",
-          strategy.walrusDataUnavailable && "border-red-500/30 opacity-75",
         )}
       >
         {/* Verified Badge */}
-        {strategy.verified && !strategy.walrusDataUnavailable && (
+        {strategy.verified && (
           <div className="absolute top-4 right-4 z-10">
             <Badge variant="success" className="gap-1">
               <CheckCircle2 className="h-3 w-3" />
@@ -71,21 +70,11 @@ export function StrategyCard({
         )}
 
         {/* Unverified Warning */}
-        {!strategy.verified && !strategy.walrusDataUnavailable && (
+        {!strategy.verified && (
           <div className="absolute top-4 right-4 z-10">
             <Badge variant="warning" className="gap-1">
               <AlertTriangle className="h-3 w-3" />
               Unverified
-            </Badge>
-          </div>
-        )}
-
-        {/* Walrus Data Unavailable Warning */}
-        {strategy.walrusDataUnavailable && (
-          <div className="absolute top-4 right-4 z-10">
-            <Badge variant="danger" className="gap-1">
-              <AlertTriangle className="h-3 w-3" />
-              Data Expired
             </Badge>
           </div>
         )}
@@ -119,6 +108,7 @@ export function StrategyCard({
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {/* ... existing chart code ... */}
           {/* Mini Chart Preview */}
           <div className="h-20 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -219,21 +209,23 @@ export function StrategyCard({
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
-            <Button variant="electric" className="flex-1 gap-2" asChild>
+            <Button variant="outline" className="flex-1" asChild>
               <Link href={`/strategies/${strategy.id}`}>View Details</Link>
             </Button>
             <Button
-              variant="outline"
-              size="icon"
+              variant="electric"
+              className="flex-1 gap-2"
               onClick={(e) => {
                 e.preventDefault();
                 onClone?.(strategy.id);
               }}
-              title="Clone to vault"
+              title="Select Strategy"
             >
-              <Copy className="h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4" />
+              Select Strategy
             </Button>
           </div>
+
         </CardContent>
       </Card>
     </motion.div>

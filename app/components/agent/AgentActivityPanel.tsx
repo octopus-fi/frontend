@@ -21,6 +21,7 @@ import {
     RefreshCw,
     Wifi,
     WifiOff,
+    ExternalLink,
 } from 'lucide-react';
 import { useAgentStore } from '@/store/agent-store';
 import { useAgentSocket } from '@/hooks/useAgentSocket';
@@ -159,9 +160,15 @@ function ExecutionItem({ execution, index }: ExecutionItemProps) {
                     </Badge>
                 </div>
                 {execution.txDigest && (
-                    <p className="text-xs text-muted-foreground font-mono truncate">
-                        TX: {execution.txDigest.slice(0, 12)}...{execution.txDigest.slice(-8)}
-                    </p>
+                    <a
+                        href={`https://suiscan.xyz/testnet/tx/${execution.txDigest}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-xs text-muted-foreground font-mono hover:text-primary transition-colors group/link mt-1"
+                    >
+                        <span>TX: {execution.txDigest.slice(0, 6)}...{execution.txDigest.slice(-6)}</span>
+                        <ExternalLink className="h-3 w-3 opacity-0 group-hover/link:opacity-100 transition-opacity" />
+                    </a>
                 )}
                 {execution.error && (
                     <p className="text-xs text-red-400 mt-1">{execution.error}</p>

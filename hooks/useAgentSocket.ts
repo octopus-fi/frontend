@@ -38,6 +38,8 @@ interface UseAgentSocketReturn {
     unsubscribeFromVault: (vaultId: string) => void;
     /** Request strategies from agent */
     requestStrategies: () => void;
+    /** Select a strategy */
+    selectStrategy: (strategyId: string) => void;
 }
 
 /**
@@ -91,10 +93,15 @@ export function useAgentSocket(options: UseAgentSocketOptions = {}): UseAgentSoc
         socket.unsubscribeFromVault(vaultId);
     }, []);
 
-    // Request strategies
     const requestStrategies = useCallback(() => {
         const socket = getSocketService();
         socket.requestStrategies();
+    }, []);
+
+    // Select strategy
+    const selectStrategy = useCallback((strategyId: string) => {
+        const socket = getSocketService();
+        socket.selectStrategy(strategyId);
     }, []);
 
     // Setup socket listeners and auto-connect
@@ -197,5 +204,6 @@ export function useAgentSocket(options: UseAgentSocketOptions = {}): UseAgentSoc
         subscribeToVault,
         unsubscribeFromVault,
         requestStrategies,
+        selectStrategy,
     };
 }

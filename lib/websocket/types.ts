@@ -26,6 +26,7 @@ export enum WSEventType {
     CLIENT_UNSUBSCRIBE_VAULT = 'client:unsubscribeVault',
     CLIENT_REQUEST_STATUS = 'client:requestStatus',
     CLIENT_REQUEST_STRATEGIES = 'client:requestStrategies',
+    CLIENT_SELECT_STRATEGY = 'client:selectStrategy',
 
     // Agent strategies
     AGENT_STRATEGIES = 'agent:strategies',

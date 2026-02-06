@@ -269,6 +269,13 @@ class SocketService {
     requestStrategies(): void {
         this.socket?.emit(WSEventType.CLIENT_REQUEST_STRATEGIES);
     }
+
+    /**
+     * Select a strategy
+     */
+    selectStrategy(strategyId: string): void {
+        this.socket?.emit(WSEventType.CLIENT_SELECT_STRATEGY, { strategy: strategyId });
+    }
 }
 
 // Export singleton getter
