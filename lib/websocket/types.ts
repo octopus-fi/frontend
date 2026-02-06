@@ -25,6 +25,10 @@ export enum WSEventType {
     CLIENT_SUBSCRIBE_VAULT = 'client:subscribeVault',
     CLIENT_UNSUBSCRIBE_VAULT = 'client:unsubscribeVault',
     CLIENT_REQUEST_STATUS = 'client:requestStatus',
+    CLIENT_REQUEST_STRATEGIES = 'client:requestStrategies',
+
+    // Agent strategies
+    AGENT_STRATEGIES = 'agent:strategies',
 }
 
 // ============================================================================
@@ -36,6 +40,11 @@ export interface AgentStatusPayload {
     vaultCount: number;
     agentAddress: string;
     connectedClients: number;
+    timestamp: number;
+}
+
+export interface AgentStrategiesPayload {
+    strategies: any[];
     timestamp: number;
 }
 

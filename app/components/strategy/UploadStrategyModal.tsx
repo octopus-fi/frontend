@@ -66,7 +66,7 @@ export function UploadStrategyModal({ onSuccess, trigger }: UploadStrategyModalP
                     autoCompound: true,
                     emergencyAction: 'repay_debt'
                 },
-                // Mock backtest for UI visualization
+                // Initial backtest data for UI visualization
                 backtest: {
                     period: '30d',
                     totalReturn: 0,

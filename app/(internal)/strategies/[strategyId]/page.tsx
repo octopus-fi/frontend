@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,39 +25,96 @@ import {
   truncateAddress,
   cn,
 } from "@/lib/utils";
-import { getMockStrategies, fetchStrategy } from "@/lib/walrus/client";
+import { fetchStrategy } from "@/lib/walrus/client";
+import { getRegisteredStrategies } from "@/sdk/queries/strategies";
+import { useAgentStore } from "@/store/agent-store";
+import { useSuiClient, useCurrentAccount } from "@mysten/dapp-kit";
+import { useQuery } from "@tanstack/react-query";
+
+interface PageParams {
+  strategyId: string;
+}
 
 export default function StrategyDetailPage({
   params,
 }: {
-  params: { strategyId: string };
+  params: PageParams;
 }) {
   const [copied, setCopied] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
+  const client = useSuiClient();
+  const account = useCurrentAccount();
 
-  // In production, fetch from Walrus by strategyId
-  const strategies = getMockStrategies();
-  const strategy =
-    strategies.find((s) => s.id === params.strategyId) || strategies[0];
+  // Get agent strategies from store
+  const { agentStrategies } = useAgentStore();
 
-  // Mock full backtest data
+  // Fetch real on-chain strategies
+  const { data: realStrategies = [], isLoading: realLoading } = useQuery({
+    queryKey: ["registeredStrategies"],
+    queryFn: async () => {
+      const real = await getRegisteredStrategies(client as any);
+      return real;
+    },
+    enabled: true, // Public info
+  });
+
+  // Find the selected strategy
+  const strategy = useMemo(() => {
+    const all = [...realStrategies, ...agentStrategies];
+    return all.find((s) => s.id === params?.strategyId);
+  }, [realStrategies, agentStrategies, params?.strategyId]);
+
+  // Handle loading and not found
+  if (realLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading strategy details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!strategy) {
+    return (
+      <div className="container mx-auto p-6 text-center">
+        <h1 className="text-2xl font-bold mb-4">Strategy Not Found</h1>
+        <p className="text-muted-foreground mb-6">
+          The strategy you're looking for doesn't exist or hasn't been synced.
+        </p>
+        <Button asChild>
+          <Link href="/strategies">Return to Marketplace</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // Use real strategy data for backtest preview if available
   const backtest = {
     period: "30d",
     totalReturn: strategy.avg30dReturn,
-    maxDrawdown: strategy.avg30dReturn * 0.3,
+    maxDrawdown: strategy.avg30dReturn * 0.3 || 5.2, // Fallback placeholder
     sharpeRatio: 1.5 + strategy.riskScore * 0.1,
     winRate: 75 - strategy.riskScore * 2,
-    historicalPerformance: Array.from({ length: 30 }, (_, i) => ({
-      date: new Date(Date.now() - (29 - i) * 86400000).toLocaleDateString(
-        "en-US",
-        {
-          month: "short",
-          day: "numeric",
-        },
-      ),
-      return: (Math.random() * 2 - 0.5) * strategy.riskScore,
-      cumulativeReturn: (i / 30) * strategy.avg30dReturn,
-    })),
+    historicalPerformance: strategy.backtestPreview?.length > 0
+      ? strategy.backtestPreview.map((item, idx, arr) => ({
+        ...item,
+        cumulativeReturn: arr
+          .slice(0, idx + 1)
+          .reduce((sum, current) => sum + current.return, 0),
+      }))
+      : Array.from({ length: 30 }, (_, i) => ({
+        date: new Date(Date.now() - (29 - i) * 86400000).toLocaleDateString(
+          "en-US",
+          {
+            month: "short",
+            day: "numeric",
+          },
+        ),
+        return: (Math.random() * 2 - 0.5) * strategy.riskScore,
+        cumulativeReturn: (i / 30) * strategy.avg30dReturn,
+      })),
     rebalanceTriggers: [
       {
         condition: `health < ${strategy.rebalanceThreshold}`,
@@ -74,10 +131,10 @@ export default function StrategyDetailPage({
   };
 
   const handleClone = async () => {
-    setLoading(true);
+    setLocalLoading(true);
     // Simulate cloning
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    setLoading(false);
+    setLocalLoading(false);
     // Would redirect to vault with strategy applied
   };
 
@@ -129,7 +186,7 @@ export default function StrategyDetailPage({
               variant="electric"
               className="gap-2"
               onClick={handleClone}
-              loading={loading}
+              loading={localLoading}
             >
               <Copy className="h-4 w-4" />
               Clone to Vault
@@ -443,7 +500,7 @@ export default function StrategyDetailPage({
                   size="lg"
                   className="w-full gap-2"
                   onClick={handleClone}
-                  loading={loading}
+                  loading={localLoading}
                 >
                   <Copy className="h-5 w-5" />
                   Clone to Vault

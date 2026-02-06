@@ -36,6 +36,8 @@ interface UseAgentSocketReturn {
     subscribeToVault: (vaultId: string) => void;
     /** Unsubscribe from vault */
     unsubscribeFromVault: (vaultId: string) => void;
+    /** Request strategies from agent */
+    requestStrategies: () => void;
 }
 
 /**
@@ -56,6 +58,7 @@ export function useAgentSocket(options: UseAgentSocketOptions = {}): UseAgentSoc
         addAnalysis,
         addExecution,
         addError,
+        setAgentStrategies,
     } = useAgentStore();
 
     // Connect to socket
@@ -86,6 +89,12 @@ export function useAgentSocket(options: UseAgentSocketOptions = {}): UseAgentSoc
     const unsubscribeFromVault = useCallback((vaultId: string) => {
         const socket = getSocketService();
         socket.unsubscribeFromVault(vaultId);
+    }, []);
+
+    // Request strategies
+    const requestStrategies = useCallback(() => {
+        const socket = getSocketService();
+        socket.requestStrategies();
     }, []);
 
     // Setup socket listeners and auto-connect
@@ -125,6 +134,10 @@ export function useAgentSocket(options: UseAgentSocketOptions = {}): UseAgentSoc
             addError(payload);
         });
 
+        const unsubAgentStrategies = socket.onAgentStrategies((payload) => {
+            setAgentStrategies(payload.strategies);
+        });
+
         // Auto-connect if enabled
         if (autoConnect) {
             connect();
@@ -140,6 +153,7 @@ export function useAgentSocket(options: UseAgentSocketOptions = {}): UseAgentSoc
             unsubAIAnalysis();
             unsubAIExecution();
             unsubError();
+            unsubAgentStrategies();
             // Note: We don't disconnect here as other components might still be using the socket
         };
     }, [
@@ -153,6 +167,7 @@ export function useAgentSocket(options: UseAgentSocketOptions = {}): UseAgentSoc
         addAnalysis,
         addExecution,
         addError,
+        setAgentStrategies,
     ]);
 
     // Subscribe to specific vaults when they change
@@ -181,5 +196,6 @@ export function useAgentSocket(options: UseAgentSocketOptions = {}): UseAgentSoc
         reconnect,
         subscribeToVault,
         unsubscribeFromVault,
+        requestStrategies,
     };
 }

@@ -12,7 +12,9 @@ import {
     ExecutionResult,
     CycleEventPayload,
     ErrorPayload,
+    AgentStrategiesPayload,
 } from '@/lib/websocket/types';
+import { Strategy } from '@/types/index';
 
 // Maximum items to keep in history arrays
 const MAX_HISTORY_ITEMS = 50;
@@ -42,6 +44,9 @@ interface AgentState {
     // Recent errors
     recentErrors: ErrorPayload[];
 
+    // Agent strategies
+    agentStrategies: Strategy[];
+
     // Actions
     setConnectionStatus: (status: ConnectionStatus) => void;
     setAgentStatus: (status: AgentStatusPayload) => void;
@@ -51,6 +56,7 @@ interface AgentState {
     addAnalysis: (analysis: AnalysisResult, timestamp?: number) => void;
     addExecution: (execution: ExecutionResult, timestamp?: number) => void;
     addError: (error: ErrorPayload) => void;
+    setAgentStrategies: (strategies: Strategy[]) => void;
     clearHistory: () => void;
     reset: () => void;
 }
@@ -67,6 +73,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     recentAnalyses: [],
     recentExecutions: [],
     recentErrors: [],
+    agentStrategies: [],
 
     // Actions
     setConnectionStatus: (status) => {
@@ -149,6 +156,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         set((state) => ({
             recentErrors: [error, ...state.recentErrors].slice(0, MAX_HISTORY_ITEMS),
         }));
+    },
+
+    setAgentStrategies: (strategies) => {
+        set({ agentStrategies: strategies });
     },
 
     clearHistory: () => {

@@ -13,6 +13,7 @@ import {
     AIExecutionPayload,
     ErrorPayload,
     ConnectionStatus,
+    AgentStrategiesPayload,
 } from './types';
 
 // Default WebSocket URL
@@ -29,6 +30,7 @@ interface EventCallbacks {
     aiAnalysis: Set<EventCallback<AIAnalysisPayload>>;
     aiExecution: Set<EventCallback<AIExecutionPayload>>;
     error: Set<EventCallback<ErrorPayload>>;
+    agentStrategies: Set<EventCallback<AgentStrategiesPayload>>;
     connectionChange: Set<EventCallback<ConnectionStatus>>;
 }
 
@@ -51,6 +53,7 @@ class SocketService {
         aiAnalysis: new Set(),
         aiExecution: new Set(),
         error: new Set(),
+        agentStrategies: new Set(),
         connectionChange: new Set(),
     };
 
@@ -172,6 +175,10 @@ class SocketService {
         this.socket.on(WSEventType.ERROR, (payload: ErrorPayload) => {
             this.callbacks.error.forEach((cb) => cb(payload));
         });
+
+        this.socket.on(WSEventType.AGENT_STRATEGIES, (payload: AgentStrategiesPayload) => {
+            this.callbacks.agentStrategies.forEach((cb) => cb(payload));
+        });
     }
 
     /**
@@ -221,6 +228,11 @@ class SocketService {
         return () => this.callbacks.error.delete(callback);
     }
 
+    onAgentStrategies(callback: EventCallback<AgentStrategiesPayload>): () => void {
+        this.callbacks.agentStrategies.add(callback);
+        return () => this.callbacks.agentStrategies.delete(callback);
+    }
+
     onConnectionChange(callback: EventCallback<ConnectionStatus>): () => void {
         this.callbacks.connectionChange.add(callback);
         return () => this.callbacks.connectionChange.delete(callback);
@@ -249,6 +261,13 @@ class SocketService {
      */
     requestStatus(): void {
         this.socket?.emit(WSEventType.CLIENT_REQUEST_STATUS);
+    }
+
+    /**
+     * Request available strategies from the agent
+     */
+    requestStrategies(): void {
+        this.socket?.emit(WSEventType.CLIENT_REQUEST_STRATEGIES);
     }
 }
 

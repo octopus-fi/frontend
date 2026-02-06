@@ -124,434 +124,420 @@ export default function LiquidatePage() {
   }, [displayVaults, searchQuery, filterUrgency, sortBy]);
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar />
+    <div className="container mx-auto p-6">
+      <div className="space-y-8 animate-fade-in">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <motion.h1
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-4xl font-bold mb-2 flex items-center gap-3"
+            >
+              <Zap className="h-10 w-10 text-primary" />
+              Flash Liquidation
+            </motion.h1>
+            <p className="text-muted-foreground text-lg">
+              Liquidate unhealthy vaults and earn instant profits
+            </p>
+          </div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
-        <Header />
+          <Button
+            variant={showCalculator ? "default" : "outline"}
+            onClick={() => setShowCalculator(!showCalculator)}
+            className="gap-2"
+          >
+            <Activity className="h-4 w-4" />
+            {showCalculator ? "Hide" : "Show"} Calculator
+          </Button>
+        </div>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-background">
-          <div className="container mx-auto p-6">
-            <div className="space-y-8 animate-fade-in">
-              {/* Page Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <motion.h1
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-4xl font-bold mb-2 flex items-center gap-3"
-                  >
-                    <Zap className="h-10 w-10 text-primary" />
-                    Flash Liquidation
-                  </motion.h1>
-                  <p className="text-muted-foreground text-lg">
-                    Liquidate unhealthy vaults and earn instant profits
-                  </p>
+        {/* Stats Overview */}
+        <div className="grid md:grid-cols-4 gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="glass border-primary/20">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">
+                    Total Opportunities
+                  </span>
+                  <Flame className="h-4 w-4 text-orange-500" />
                 </div>
-
-                <Button
-                  variant={showCalculator ? "default" : "outline"}
-                  onClick={() => setShowCalculator(!showCalculator)}
-                  className="gap-2"
-                >
-                  <Activity className="h-4 w-4" />
-                  {showCalculator ? "Hide" : "Show"} Calculator
-                </Button>
-              </div>
-
-              {/* Stats Overview */}
-              <div className="grid md:grid-cols-4 gap-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <Card className="glass border-primary/20">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">
-                          Total Opportunities
-                        </span>
-                        <Flame className="h-4 w-4 text-orange-500" />
-                      </div>
-                      <div className="text-3xl font-bold">
-                        {stats.totalOpportunities}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {stats.criticalCount} critical
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Card className="glass border-primary/20">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">
-                          Total Profit
-                        </span>
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                      </div>
-                      <div className="text-3xl font-bold text-green-500">
-                        {formatCurrency(stats.totalProfit)}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Available to earn
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Card className="glass border-primary/20">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">
-                          Total Debt
-                        </span>
-                        <DollarSign className="h-4 w-4 text-amber-500" />
-                      </div>
-                      <div className="text-3xl font-bold">
-                        {formatCurrency(stats.totalDebt)}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        To be liquidated
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  <Card className="glass border-primary/20">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-muted-foreground">
-                          Avg Profit
-                        </span>
-                        <Activity className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="text-3xl font-bold text-primary">
-                        {formatCurrency(stats.avgProfit)}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Per liquidation
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              </div>
-
-              {/* Profit Calculator (Conditional) */}
-              {showCalculator && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  <ProfitCalculator />
-                </motion.div>
-              )}
-
-              {/* Filters and Search */}
-              <Card className="glass">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    {/* Search */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search by vault ID or owner address..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap gap-4 items-center">
-                      {/* Sort Options */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                          Sort by:
-                        </span>
-                        <div className="flex gap-1">
-                          <Button
-                            variant={
-                              sortBy === "urgency" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setSortBy("urgency")}
-                          >
-                            Urgency
-                          </Button>
-                          <Button
-                            variant={
-                              sortBy === "profit" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setSortBy("profit")}
-                          >
-                            Profit
-                          </Button>
-                          <Button
-                            variant={sortBy === "debt" ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSortBy("debt")}
-                          >
-                            Debt
-                          </Button>
-                          <Button
-                            variant={
-                              sortBy === "health" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setSortBy("health")}
-                          >
-                            Health
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="h-6 w-px bg-white/10" />
-
-                      {/* Urgency Filter */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                          Priority:
-                        </span>
-                        <div className="flex gap-1">
-                          <Button
-                            variant={
-                              filterUrgency === "all" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setFilterUrgency("all")}
-                          >
-                            All
-                          </Button>
-                          <Button
-                            variant={
-                              filterUrgency === "critical"
-                                ? "default"
-                                : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setFilterUrgency("critical")}
-                            className="gap-1"
-                          >
-                            <div className="h-2 w-2 rounded-full bg-red-500" />
-                            Critical
-                          </Button>
-                          <Button
-                            variant={
-                              filterUrgency === "high" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setFilterUrgency("high")}
-                            className="gap-1"
-                          >
-                            <div className="h-2 w-2 rounded-full bg-orange-500" />
-                            High
-                          </Button>
-                          <Button
-                            variant={
-                              filterUrgency === "medium" ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setFilterUrgency("medium")}
-                            className="gap-1"
-                          >
-                            <div className="h-2 w-2 rounded-full bg-yellow-500" />
-                            Medium
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Results Count */}
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Showing {filteredVaults.length} liquidation{" "}
-                  {filteredVaults.length === 1
-                    ? "opportunity"
-                    : "opportunities"}
+                <div className="text-3xl font-bold">
+                  {stats.totalOpportunities}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {stats.criticalCount} critical
                 </p>
-                {stats.criticalCount > 0 && (
-                  <Badge variant="danger" className="gap-1 animate-pulse">
-                    <Flame className="h-3 w-3" />
-                    {stats.criticalCount} Critical - Act Fast!
-                  </Badge>
-                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="glass border-primary/20">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">
+                    Total Profit
+                  </span>
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                </div>
+                <div className="text-3xl font-bold text-green-500">
+                  {formatCurrency(stats.totalProfit)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Available to earn
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="glass border-primary/20">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">
+                    Total Debt
+                  </span>
+                  <DollarSign className="h-4 w-4 text-amber-500" />
+                </div>
+                <div className="text-3xl font-bold">
+                  {formatCurrency(stats.totalDebt)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  To be liquidated
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card className="glass border-primary/20">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">
+                    Avg Profit
+                  </span>
+                  <Activity className="h-4 w-4 text-primary" />
+                </div>
+                <div className="text-3xl font-bold text-primary">
+                  {formatCurrency(stats.avgProfit)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Per liquidation
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Profit Calculator (Conditional) */}
+        {showCalculator && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+          >
+            <ProfitCalculator />
+          </motion.div>
+        )}
+
+        {/* Filters and Search */}
+        <Card className="glass">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by vault ID or owner address..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
               </div>
 
-              {/* Liquidatable Vaults Grid */}
-              {filteredVaults.length > 0 ? (
-                <div className="grid lg:grid-cols-2 gap-6">
-                  {filteredVaults.map((vault, index) => (
-                    <LiquidatableVault
-                      key={vault.id}
-                      vault={vault}
-                      index={index}
-                      onLiquidate={(id) => console.log("Liquidated:", id)}
-                    />
-                  ))}
+              <div className="flex flex-wrap gap-4 items-center">
+                {/* Sort Options */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Sort by:
+                  </span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant={
+                        sortBy === "urgency" ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={() => setSortBy("urgency")}
+                    >
+                      Urgency
+                    </Button>
+                    <Button
+                      variant={
+                        sortBy === "profit" ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={() => setSortBy("profit")}
+                    >
+                      Profit
+                    </Button>
+                    <Button
+                      variant={sortBy === "debt" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSortBy("debt")}
+                    >
+                      Debt
+                    </Button>
+                    <Button
+                      variant={
+                        sortBy === "health" ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={() => setSortBy("health")}
+                    >
+                      Health
+                    </Button>
+                  </div>
                 </div>
-              ) : (
-                <Card className="glass">
-                  <CardContent className="p-12 text-center">
-                    <div className="max-w-md mx-auto">
-                      <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
-                      <h3 className="text-xl font-semibold mb-2">
-                        No Opportunities Found
-                      </h3>
-                      <p className="text-muted-foreground mb-6">
-                        {searchQuery || filterUrgency !== "all"
-                          ? "Try adjusting your filters or search query"
-                          : "No vaults are currently eligible for liquidation. Check back later!"}
-                      </p>
-                      {(searchQuery || filterUrgency !== "all") && (
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setSearchQuery("");
-                            setFilterUrgency("all");
-                          }}
-                        >
-                          Clear Filters
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
-              {/* Info Section */}
-              <div className="grid md:grid-cols-2 gap-6">
-                <Card className="glass border-primary/20">
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      How Flash Liquidation Works
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                    <div className="flex gap-3">
-                      <div className="shrink-0 h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                        1
-                      </div>
-                      <div>
-                        <div className="font-medium mb-1">
-                          Identify Opportunity
-                        </div>
-                        <p className="text-muted-foreground">
-                          Find vaults with health factor below 1.1× that can be
-                          liquidated
-                        </p>
-                      </div>
-                    </div>
+                <div className="h-6 w-px bg-white/10" />
 
-                    <div className="flex gap-3">
-                      <div className="shrink-0 h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                        2
-                      </div>
-                      <div>
-                        <div className="font-medium mb-1">Flash Loan</div>
-                        <p className="text-muted-foreground">
-                          Borrow octUSD instantly to repay the vault's debt
-                          (0.09% fee)
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="shrink-0 h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                        3
-                      </div>
-                      <div>
-                        <div className="font-medium mb-1">Seize & Sell</div>
-                        <p className="text-muted-foreground">
-                          Claim collateral with 3% liquidator bonus, sell for
-                          octUSD
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <div className="shrink-0 h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                        4
-                      </div>
-                      <div>
-                        <div className="font-medium mb-1">Profit</div>
-                        <p className="text-muted-foreground">
-                          Repay flash loan and keep the remaining profit (all in
-                          one transaction!)
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="glass border-primary/20 bg-primary/5">
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <Info className="h-5 w-5 text-primary" />
-                      Important Notes
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <div className="flex items-start gap-2">
-                      <Clock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                      <span>
-                        <strong>Speed matters:</strong> Critical vaults can be
-                        liquidated by anyone. First transaction wins the profit.
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <Zap className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                      <span>
-                        <strong>Flash loans:</strong> No capital required
-                        upfront. Everything happens in a single atomic
-                        transaction.
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <DollarSign className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                      <span>
-                        <strong>Fees:</strong> Flash loan (0.09%), gas fees
-                        (~$5), and slippage may reduce final profit.
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                      <span>
-                        <strong>Risk:</strong> Transaction may fail if vault
-                        becomes healthy or another liquidator acts first.
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Urgency Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    Priority:
+                  </span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant={
+                        filterUrgency === "all" ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={() => setFilterUrgency("all")}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      variant={
+                        filterUrgency === "critical"
+                          ? "default"
+                          : "outline"
+                      }
+                      size="sm"
+                      onClick={() => setFilterUrgency("critical")}
+                      className="gap-1"
+                    >
+                      <div className="h-2 w-2 rounded-full bg-red-500" />
+                      Critical
+                    </Button>
+                    <Button
+                      variant={
+                        filterUrgency === "high" ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={() => setFilterUrgency("high")}
+                      className="gap-1"
+                    >
+                      <div className="h-2 w-2 rounded-full bg-orange-500" />
+                      High
+                    </Button>
+                    <Button
+                      variant={
+                        filterUrgency === "medium" ? "default" : "outline"
+                      }
+                      size="sm"
+                      onClick={() => setFilterUrgency("medium")}
+                      className="gap-1"
+                    >
+                      <div className="h-2 w-2 rounded-full bg-yellow-500" />
+                      Medium
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Results Count */}
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {filteredVaults.length} liquidation{" "}
+            {filteredVaults.length === 1
+              ? "opportunity"
+              : "opportunities"}
+          </p>
+          {stats.criticalCount > 0 && (
+            <Badge variant="danger" className="gap-1 animate-pulse">
+              <Flame className="h-3 w-3" />
+              {stats.criticalCount} Critical - Act Fast!
+            </Badge>
+          )}
+        </div>
+
+        {/* Liquidatable Vaults Grid */}
+        {filteredVaults.length > 0 ? (
+          <div className="grid lg:grid-cols-2 gap-6">
+            {filteredVaults.map((vault, index) => (
+              <LiquidatableVault
+                key={vault.id}
+                vault={vault}
+                index={index}
+                onLiquidate={(id) => console.log("Liquidated:", id)}
+              />
+            ))}
           </div>
-        </main>
+        ) : (
+          <Card className="glass">
+            <CardContent className="p-12 text-center">
+              <div className="max-w-md mx-auto">
+                <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
+                <h3 className="text-xl font-semibold mb-2">
+                  No Opportunities Found
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  {searchQuery || filterUrgency !== "all"
+                    ? "Try adjusting your filters or search query"
+                    : "No vaults are currently eligible for liquidation. Check back later!"}
+                </p>
+                {(searchQuery || filterUrgency !== "all") && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setFilterUrgency("all");
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Info Section */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="glass border-primary/20">
+            <CardHeader>
+              <CardTitle className="text-base">
+                How Flash Liquidation Works
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex gap-3">
+                <div className="shrink-0 h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                  1
+                </div>
+                <div>
+                  <div className="font-medium mb-1">
+                    Identify Opportunity
+                  </div>
+                  <p className="text-muted-foreground">
+                    Find vaults with health factor below 1.1× that can be
+                    liquidated
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="shrink-0 h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                  2
+                </div>
+                <div>
+                  <div className="font-medium mb-1">Flash Loan</div>
+                  <p className="text-muted-foreground">
+                    Borrow octUSD instantly to repay the vault's debt
+                    (0.09% fee)
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="shrink-0 h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                  3
+                </div>
+                <div>
+                  <div className="font-medium mb-1">Seize & Sell</div>
+                  <p className="text-muted-foreground">
+                    Claim collateral with 3% liquidator bonus, sell for
+                    octUSD
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <div className="shrink-0 h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+                  4
+                </div>
+                <div>
+                  <div className="font-medium mb-1">Profit</div>
+                  <p className="text-muted-foreground">
+                    Repay flash loan and keep the remaining profit (all in
+                    one transaction!)
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Info className="h-5 w-5 text-primary" />
+                Important Notes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex items-start gap-2">
+                <Clock className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>
+                  <strong>Speed matters:</strong> Critical vaults can be
+                  liquidated by anyone. First transaction wins the profit.
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <Zap className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>
+                  <strong>Flash loans:</strong> No capital required
+                  upfront. Everything happens in a single atomic
+                  transaction.
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <DollarSign className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>
+                  <strong>Fees:</strong> Flash loan (0.09%), gas fees
+                  (~$5), and slippage may reduce final profit.
+                </span>
+              </div>
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>
+                  <strong>Risk:</strong> Transaction may fail if vault
+                  becomes healthy or another liquidator acts first.
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -18,7 +18,6 @@ import {
   Upload,
   AlertCircle,
 } from "lucide-react";
-import { getMockStrategies } from "@/lib/walrus/client";
 import { formatCurrency } from "@/lib/utils";
 // import type { Strategy } from '@/types/index';
 import {
@@ -33,6 +32,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useUIStore } from "@/store/ui-store";
 import { Switch } from "@/components/ui/switch";
 import { Bot, Zap } from "lucide-react";
+import { useAgentSocket } from "@/hooks/useAgentSocket";
+import { useAgentStore } from "@/store/agent-store";
+import { useEffect } from "react";
 
 type SortBy = "performance" | "users" | "recent" | "tvl";
 type FilterRisk = "all" | "conservative" | "moderate" | "aggressive";
@@ -50,6 +52,16 @@ export default function StrategiesPage() {
   const account = useCurrentAccount();
   const client = useSuiClient();
   const { addNotification } = useUIStore();
+
+  const { isConnected, requestStrategies } = useAgentSocket();
+  const agentStrategies = useAgentStore((state) => state.agentStrategies);
+
+  // Request strategies from agent on connect
+  useEffect(() => {
+    if (isConnected) {
+      requestStrategies();
+    }
+  }, [isConnected, requestStrategies]);
 
   const isAutoRebalanceEnabled = position?.autoRebalanceEnabled ?? false;
 
@@ -110,7 +122,6 @@ export default function StrategiesPage() {
     queryFn: async () => {
       // Import dynamically to avoid SSR issues if any
       const { getRegisteredStrategies } = await import('@/sdk/queries/strategies');
-      const { getMockStrategies } = await import('@/lib/walrus/client');
 
       const real = await getRegisteredStrategies(client as any);
       // Check signature of useSuiClient().
@@ -123,18 +134,28 @@ export default function StrategiesPage() {
     enabled: !!account, // Or always? Public can view. enabled: true.
   });
 
-  // Merge real and mock strategies
+  // Merge real and agent strategies
   const strategies = useMemo(() => {
-    const mocks = getMockStrategies();
-    // Prefer real strategies if ID collision (unlikely with blobId vs '1')
-    return [...realStrategies, ...mocks];
-  }, [realStrategies]);
+    // Unique strategies by name or ID
+    const all = [...realStrategies, ...agentStrategies];
 
+    // Filter out duplicates (prefer real over agent if same name)
+    const seen = new Set();
+    return all.filter(s => {
+      const key = s.name.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [realStrategies, agentStrategies]);
+
+  console.log("realStrategies", realStrategies);
+  console.log("agentStrategies", agentStrategies);
+  console.log("strategies", strategies);
   // Calculate marketplace stats
   const stats = useMemo(() => {
     const totalStrategies = strategies.length;
     const onChainCount = realStrategies.length;
-    const mockCount = totalStrategies - onChainCount;
     const totalUsers = strategies.reduce((sum, s) => sum + s.totalUsers, 0);
     const totalTVL = strategies.reduce(
       (sum, s) => sum + Number(s.totalValueManaged),
@@ -151,7 +172,6 @@ export default function StrategiesPage() {
     return {
       totalStrategies,
       onChainCount,
-      mockCount,
       totalUsers,
       totalTVL,
       avgReturn,
@@ -294,7 +314,7 @@ export default function StrategiesPage() {
                   {stats.totalStrategies}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {stats.onChainCount} on-chain • {stats.mockCount} demo
+                  {stats.onChainCount} on-chain marketplace strategies
                   {stats.unavailableCount > 0 && (
                     <span className="text-amber-500 ml-1">
                       ({stats.unavailableCount} expired)
