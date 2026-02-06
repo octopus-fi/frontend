@@ -467,13 +467,13 @@ export default function LandingPage() {
 
             <div className="flex gap-6">
               <Link
-                href="#"
+                href="https://github.com/octopus-fi"
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
                 <Github className="h-5 w-5" />
               </Link>
               <Link
-                href="#"
+                href="https://x.com/Octopus.fi"
                 className="text-muted-foreground hover:text-primary transition-colors"
               >
                 <Twitter className="h-5 w-5" />
@@ -487,7 +487,7 @@ export default function LandingPage() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              © 2026 Octopus Finance. Built with 🐙 for HackMoney
+              © 2026 Octopus Finance. Built with ❤️ on Sui for HackMoney 2026
             </p>
           </div>
         </div>
