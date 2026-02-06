@@ -9,6 +9,7 @@
 
 import { SuiJsonRpcClient } from "@mysten/sui/jsonRpc";
 export * from "./strategies";
+export * from "./liquidation";
 import {
   PACKAGE_ID,
   SHARED_OBJECTS,
@@ -341,6 +342,8 @@ export async function getOctsuiPrice(
     if (dynamicField.data?.content?.dataType === 'moveObject') {
       const priceFields = dynamicField.data.content.fields as any;
       return BigInt(priceFields.value || 3_500_000_000);
+    } else {
+      console.log('Oracle DynamicField structure mismatch:', JSON.stringify(dynamicField.data, null, 2));
     }
 
     return 3_500_000_000n; // Fallback to $3.5
@@ -373,12 +376,33 @@ export async function getUserCoins(
   userAddress: string,
   coinType: string,
 ): Promise<Array<{ id: string; balance: bigint }>> {
-  const coins = await client.getCoins({
-    owner: userAddress,
-    coinType,
-  });
+  let hasNextPage = true;
+  let nextCursor: string | null | undefined = null;
+  const allCoins: any[] = [];
 
-  return coins.data.map((coin) => ({
+  const seenCoinIds = new Set<string>();
+  const uniqueCoins: any[] = [];
+
+  while (hasNextPage) {
+    const response: any = await client.getCoins({
+      owner: userAddress,
+      coinType,
+      cursor: nextCursor,
+      limit: 50,
+    });
+
+    for (const coin of response.data) {
+      if (!seenCoinIds.has(coin.coinObjectId)) {
+        seenCoinIds.add(coin.coinObjectId);
+        uniqueCoins.push(coin);
+      }
+    }
+
+    hasNextPage = response.hasNextPage;
+    nextCursor = response.nextCursor;
+  }
+
+  return uniqueCoins.map((coin) => ({
     id: coin.coinObjectId,
     balance: BigInt(coin.balance),
   }));
