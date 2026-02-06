@@ -21,16 +21,17 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { AgentStatusIndicator } from '@/components/agent/AgentActivityPanel';
 import { formatPercent } from '@/lib/utils';
 
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, setSidebarOpen } = useUIStore();
   const { data: poolStats } = usePoolStats();
-  
+
   // Calculate APY from pool stats
-  const estimatedApy = poolStats 
-    ? (poolStats.rewardRateBps * 365) / 100 
+  const estimatedApy = poolStats
+    ? (poolStats.rewardRateBps * 365) / 100
     : 7.2;
 
   const navigation = [
@@ -56,11 +57,6 @@ export function Sidebar() {
       icon: Store,
       badge: 'New',
       badgeVariant: 'electric' as const,
-    },
-    {
-      name: 'AI Chat',
-      href: '/chat',
-      icon: MessageSquare,
     },
     {
       name: 'Analytics',
@@ -165,8 +161,8 @@ export function Sidebar() {
                   {item.name}
                 </span>
                 {item.badge && (
-                  <Badge 
-                    variant={item.badgeVariant || 'outline'} 
+                  <Badge
+                    variant={item.badgeVariant || 'outline'}
                     className="text-xs"
                   >
                     {item.badge}
@@ -211,6 +207,16 @@ export function Sidebar() {
               </Link>
             );
           })}
+        </div>
+
+        {/* Agent Connection Status */}
+        <div className="p-4 bg-primary/5 border-t border-primary/10">
+          <div className="flex flex-col gap-2">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              AI Agent Status
+            </span>
+            <AgentStatusIndicator />
+          </div>
         </div>
       </motion.aside>
     </>

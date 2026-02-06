@@ -163,6 +163,14 @@ export const API = {
   WALRUS_FETCH: '/api/walrus/fetch',
 } as const;
 
+// WebSocket Configuration (AI Agent)
+export const WEBSOCKET = {
+  URL: process.env.NEXT_PUBLIC_AGENT_WS_URL || 'http://localhost:3001',
+  RECONNECT_ATTEMPTS: 10,
+  RECONNECT_DELAY: 1000,
+  RECONNECT_DELAY_MAX: 5000,
+} as const;
+
 // Feature Flags
 export const FEATURES = {
   AI_CHAT: true,

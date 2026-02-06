@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Send, Waves, Activity, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Header } from "@/components/layout/Header";
-import { Sidebar } from "@/components/layout/Sidebar";
 
 // ─── Simulated response bank ────────────────────────────────────────────────
 // Maps keyword patterns → { text, optional txPreview }.
@@ -357,147 +355,125 @@ export default function ChatPage() {
   const showSuggestions = messages.length === 1 && !isThinking;
 
   return (
-    /*
-      The dashboard layout wraps us in:
-        <main class="flex-1 overflow-y-auto">
-          <div class="container mx-auto p-6">  ← this child
-    
-      We use negative margin + h-full to expand back to fill <main>,
-      then set up our own flex column inside.
-    */
-    <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
-        <Header />
-
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-background">
-          <div className="container mx-auto p-6">
-            <div className="-m-6 h-[calc(100vh-4rem)] flex flex-col">
-              {/* ── Top bar ──────────────────────────────────────────────────────── */}
-              <div className="shrink-0 flex items-center justify-between px-6 py-3.5 border-b border-white/10 glass-dark">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
-                    <Waves className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm">Octopus AI</span>
-                      <Badge variant="success" className="text-xs gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
-                        Live
-                      </Badge>
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      Vault manager · powered by AI
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <Activity className="h-3 w-3 text-primary" />3 Vaults
-                    monitored
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    <Sparkles className="h-3 w-3 text-amber-400" />
-                    AI Active
-                  </Badge>
-                </div>
+    <div className="container mx-auto p-6">
+      <div className="-m-6 h-[calc(100vh-4rem)] flex flex-col">
+        {/* ── Top bar ──────────────────────────────────────────────────────── */}
+        <div className="shrink-0 flex items-center justify-between px-6 py-3.5 border-b border-white/10 glass-dark">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center">
+              <Waves className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm">Octopus AI</span>
+                <Badge variant="success" className="text-xs gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+                  Live
+                </Badge>
               </div>
-
-              {/* ── Message list (scrolling) ───────────────────────────────────── */}
-              <div
-                ref={scrollRef}
-                className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
-              >
-                {messages.map((msg, i) => (
-                  <ChatMessage key={msg.id} message={msg} index={i} />
-                ))}
-
-                {/* Typing indicator */}
-                <AnimatePresence>
-                  {isThinking && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <TypingIndicator />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Suggested prompts — only when chat is at its initial state */}
-                <AnimatePresence>
-                  {showSuggestions && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3, delay: 0.2 }}
-                      className="pt-2"
-                    >
-                      <SuggestedPrompts onSelect={handleSuggestion} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* ── Input bar ──────────────────────────────────────────────────── */}
-              <div className="shrink-0 px-6 py-4 border-t border-white/10 glass-dark">
-                <div className="flex items-end gap-3 bg-background/60 border border-white/10 rounded-2xl px-4 py-3 focus-within:border-primary/40 transition-colors">
-                  <textarea
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend();
-                      }
-                    }}
-                    placeholder="Ask me anything about your vaults…"
-                    rows={1}
-                    className={cn(
-                      "flex-1 resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none",
-                      "max-h-32", // cap height so it doesn't grow unbounded
-                    )}
-                    style={{ lineHeight: "1.6" }}
-                    disabled={isThinking}
-                  />
-                  <Button
-                    variant="electric"
-                    size="icon"
-                    className="shrink-0 h-9 w-9"
-                    onClick={handleSend}
-                    disabled={!input.trim() || isThinking}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-
-                {/* Footer hint */}
-                <p className="text-xs text-muted-foreground text-center mt-2.5">
-                  Press{" "}
-                  <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">
-                    Enter
-                  </kbd>{" "}
-                  to send ·{" "}
-                  <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">
-                    Shift+Enter
-                  </kbd>{" "}
-                  for new line · Transactions are previewed before execution
-                </p>
-              </div>
+              <span className="text-xs text-muted-foreground">
+                Vault manager · powered by AI
+              </span>
             </div>
           </div>
-        </main>
+
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs gap-1">
+              <Activity className="h-3 w-3 text-primary" />3 Vaults
+              monitored
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              <Sparkles className="h-3 w-3 text-amber-400" />
+              AI Active
+            </Badge>
+          </div>
+        </div>
+
+        {/* ── Message list (scrolling) ───────────────────────────────────── */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
+        >
+          {messages.map((msg, i) => (
+            <ChatMessage key={msg.id} message={msg} index={i} />
+          ))}
+
+          {/* Typing indicator */}
+          <AnimatePresence>
+            {isThinking && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <TypingIndicator />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Suggested prompts — only when chat is at its initial state */}
+          <AnimatePresence>
+            {showSuggestions && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                className="pt-2"
+              >
+                <SuggestedPrompts onSelect={handleSuggestion} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* ── Input bar ──────────────────────────────────────────────────── */}
+        <div className="shrink-0 px-6 py-4 border-t border-white/10 glass-dark">
+          <div className="flex items-end gap-3 bg-background/60 border border-white/10 rounded-2xl px-4 py-3 focus-within:border-primary/40 transition-colors">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Ask me anything about your vaults…"
+              rows={1}
+              className={cn(
+                "flex-1 resize-none bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none",
+                "max-h-32", // cap height so it doesn't grow unbounded
+              )}
+              style={{ lineHeight: "1.6" }}
+              disabled={isThinking}
+            />
+            <Button
+              variant="electric"
+              size="icon"
+              className="shrink-0 h-9 w-9"
+              onClick={handleSend}
+              disabled={!input.trim() || isThinking}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Footer hint */}
+          <p className="text-xs text-muted-foreground text-center mt-2.5">
+            Press{" "}
+            <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">
+              Enter
+            </kbd>{" "}
+            to send ·{" "}
+            <kbd className="px-1.5 py-0.5 rounded bg-muted text-xs font-mono">
+              Shift+Enter
+            </kbd>{" "}
+            for new line · Transactions are previewed before execution
+          </p>
+        </div>
       </div>
     </div>
   );
