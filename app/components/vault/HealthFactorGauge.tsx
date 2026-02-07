@@ -104,7 +104,7 @@ export function HealthFactorGauge({
 
   // Full version for vault detail page
   return (
-    <Card className={cn('glass', className)}>
+    <Card className={cn('glass glow-primary', className)}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">

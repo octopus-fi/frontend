@@ -77,7 +77,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <Card className="glass border-primary/20 max-w-2xl mx-auto">
+          <Card className="glass glow-primary border-primary/20 max-w-2xl mx-auto">
             <CardContent className="p-12 text-center">
               <Shield className="h-16 w-16 text-primary mx-auto mb-4" />
               <h3 className="text-2xl font-bold mb-2">
@@ -98,7 +98,7 @@ export default function DashboardPage() {
 
           {/* Quick Actions */}
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            <Card className="glass">
+            <Card className="glass glow-primary">
               <CardContent className="p-6 text-center">
                 <Wallet className="h-12 w-12 text-cyan-500 mx-auto mb-4" />
                 <h4 className="font-semibold mb-2">Stake SUI</h4>
@@ -112,7 +112,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="glass">
+            <Card className="glass glow-primary">
               <CardContent className="p-6 text-center">
                 <Zap className="h-12 w-12 text-amber-500 mx-auto mb-4" />
                 <h4 className="font-semibold mb-2">Browse Strategies</h4>
@@ -125,7 +125,7 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="glass">
+            <Card className="glass glow-primary">
               <CardContent className="p-6 text-center">
                 <Activity className="h-12 w-12 text-green-500 mx-auto mb-4" />
                 <h4 className="font-semibold mb-2">View Analytics</h4>
@@ -174,7 +174,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="glass border-primary/20 relative overflow-hidden group hover:shadow-xl transition-shadow">
+            <Card className="glass glow-primary border-primary/20 relative overflow-hidden group hover:shadow-xl transition-shadow">
               <div className="absolute inset-0 gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -200,7 +200,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Borrowed
@@ -223,7 +223,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Health Factor
@@ -258,7 +258,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Est. APY
@@ -281,7 +281,7 @@ export default function DashboardPage() {
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Vault Overview */}
           <div className="lg:col-span-2 space-y-6">
-            <Card className="glass">
+            <Card className="glass glow-primary">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Your Vault</CardTitle>
@@ -384,7 +384,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Balances Card */}
-            <Card className="glass">
+            <Card className="glass glow-primary">
               <CardHeader>
                 <CardTitle>Token Balances</CardTitle>
               </CardHeader>
@@ -513,7 +513,7 @@ export default function DashboardPage() {
               )}
 
             {/* Quick Actions */}
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
@@ -562,7 +562,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Market Info */}
-            <Card className="glass">
+            <Card className="glass glow-primary">
               <CardHeader>
                 <CardTitle>Market Info</CardTitle>
               </CardHeader>

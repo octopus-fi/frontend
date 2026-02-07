@@ -195,7 +195,7 @@ export function BorrowForm({
   const hasBorrow = borrowAmount && parseFloat(borrowAmount) > 0;
 
   return (
-    <Card className="glass border-primary/20">
+    <Card className="glass glow-primary border-primary/20">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">

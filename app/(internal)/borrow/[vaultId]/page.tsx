@@ -63,7 +63,7 @@ export default function VaultDetailPage() {
   if (!vault) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Card className="glass border-amber-500/50 max-w-md">
+        <Card className="glass glow-primary border-amber-500/50 max-w-md">
           <CardContent className="p-8 text-center">
             <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
             <h3 className="text-xl font-bold mb-2">Vault Not Found</h3>
@@ -140,7 +140,7 @@ export default function VaultDetailPage() {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <Card className="glass border-amber-500/50 bg-amber-500/5">
+              <Card className="glass glow-primary border-amber-500/50 bg-amber-500/5">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <AlertTriangle className="h-6 w-6 text-amber-500 shrink-0 mt-1" />
@@ -185,7 +185,7 @@ export default function VaultDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -208,7 +208,7 @@ export default function VaultDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -231,7 +231,7 @@ export default function VaultDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -263,7 +263,7 @@ export default function VaultDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">

@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
 import {
   Waves,
   Brain,
@@ -46,7 +47,13 @@ export default function LandingPage() {
       >
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Waves className="h-8 w-8 text-primary" />
+            <Image
+              src="/logo.jpeg"
+              alt="Octopus Logo"
+              width={40}
+              height={40}
+              className="rounded-lg object-contain"
+            />
             <span className="text-2xl font-bold gradient-text">
               Octopus Finance
             </span>
@@ -759,7 +766,13 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
-              <Waves className="h-6 w-6 text-primary" />
+              <Image
+                src="/logo.jpeg"
+                alt="Octopus Logo"
+                width={24}
+                height={24}
+                className="rounded-md object-contain"
+              />
               <span className="font-bold gradient-text">Octopus Finance</span>
             </div>
 

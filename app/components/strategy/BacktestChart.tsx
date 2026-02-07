@@ -37,9 +37,8 @@ export function BacktestChart({ backtest, compact = false }: BacktestChartProps)
             {data.date}
           </p>
           <div className="flex items-center gap-2">
-            <span className={`text-lg font-bold ${
-              data.cumulativeReturn >= 0 ? 'text-green-500' : 'text-red-500'
-            }`}>
+            <span className={`text-lg font-bold ${data.cumulativeReturn >= 0 ? 'text-green-500' : 'text-red-500'
+              }`}>
               {data.cumulativeReturn >= 0 ? '+' : ''}
               {formatPercent(data.cumulativeReturn / 100)}
             </span>
@@ -56,7 +55,7 @@ export function BacktestChart({ backtest, compact = false }: BacktestChartProps)
   };
 
   return (
-    <Card className="glass border-primary/20">
+    <Card className="glass glow-primary border-primary/20">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
@@ -66,9 +65,9 @@ export function BacktestChart({ backtest, compact = false }: BacktestChartProps)
               {backtest.period}
             </Badge>
           </CardTitle>
-          
+
           <div className="flex items-center gap-2">
-            <Badge 
+            <Badge
               variant={isPositive ? 'success' : 'danger'}
               className="gap-1"
             >
@@ -87,9 +86,8 @@ export function BacktestChart({ backtest, compact = false }: BacktestChartProps)
           <div className="grid grid-cols-4 gap-4 mt-4">
             <div className="text-center">
               <div className="text-xs text-muted-foreground mb-1">Total Return</div>
-              <div className={`text-lg font-bold ${
-                backtest.totalReturn >= 0 ? 'text-green-500' : 'text-red-500'
-              }`}>
+              <div className={`text-lg font-bold ${backtest.totalReturn >= 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
                 {backtest.totalReturn >= 0 ? '+' : ''}
                 {formatPercent(backtest.totalReturn / 100)}
               </div>
@@ -125,27 +123,27 @@ export function BacktestChart({ backtest, compact = false }: BacktestChartProps)
           <AreaChart data={backtest.historicalPerformance}>
             <defs>
               <linearGradient id="returnGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop 
-                  offset="5%" 
-                  stopColor={isPositive ? '#10B981' : '#EF4444'} 
+                <stop
+                  offset="5%"
+                  stopColor={isPositive ? '#10B981' : '#EF4444'}
                   stopOpacity={0.3}
                 />
-                <stop 
-                  offset="95%" 
-                  stopColor={isPositive ? '#10B981' : '#EF4444'} 
+                <stop
+                  offset="95%"
+                  stopColor={isPositive ? '#10B981' : '#EF4444'}
                   stopOpacity={0}
                 />
               </linearGradient>
             </defs>
-            
-            <CartesianGrid 
-              strokeDasharray="3 3" 
+
+            <CartesianGrid
+              strokeDasharray="3 3"
               stroke="rgba(255,255,255,0.1)"
               vertical={false}
             />
-            
-            <XAxis 
-              dataKey="date" 
+
+            <XAxis
+              dataKey="date"
               stroke="#6B7280"
               fontSize={12}
               tickLine={false}
@@ -159,35 +157,35 @@ export function BacktestChart({ backtest, compact = false }: BacktestChartProps)
                 return value;
               }}
             />
-            
-            <YAxis 
+
+            <YAxis
               stroke="#6B7280"
               fontSize={12}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => `${value.toFixed(0)}%`}
             />
-            
+
             <Tooltip content={<CustomTooltip />} />
-            
+
             {/* Zero line */}
-            <ReferenceLine 
-              y={0} 
-              stroke="#6B7280" 
+            <ReferenceLine
+              y={0}
+              stroke="#6B7280"
               strokeDasharray="3 3"
             />
-            
-            <Area 
-              type="monotone" 
-              dataKey="cumulativeReturn" 
+
+            <Area
+              type="monotone"
+              dataKey="cumulativeReturn"
               stroke={isPositive ? '#10B981' : '#EF4444'}
               strokeWidth={2}
               fill="url(#returnGradient)"
             />
-            
-            <Line 
-              type="monotone" 
-              dataKey="cumulativeReturn" 
+
+            <Line
+              type="monotone"
+              dataKey="cumulativeReturn"
               stroke={isPositive ? '#10B981' : '#EF4444'}
               strokeWidth={3}
               dot={false}
@@ -202,7 +200,7 @@ export function BacktestChart({ backtest, compact = false }: BacktestChartProps)
             <div className="text-sm font-medium">Rebalance Triggers</div>
             <div className="space-y-2">
               {backtest.rebalanceTriggers.map((trigger, i) => (
-                <div 
+                <div
                   key={i}
                   className="flex items-start gap-3 p-3 rounded-lg bg-background/50 border border-white/10"
                 >
@@ -230,7 +228,7 @@ export function BacktestChart({ backtest, compact = false }: BacktestChartProps)
                 +{Math.max(...backtest.historicalPerformance.map(d => d.return)).toFixed(2)}%
               </div>
             </div>
-            
+
             <div className="p-3 rounded-lg bg-background/50 border border-white/10">
               <div className="text-muted-foreground mb-1">Worst Day</div>
               <div className="text-lg font-bold text-red-500">

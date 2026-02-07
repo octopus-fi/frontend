@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/ui-store';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import {
   LayoutDashboard,
   Waves,
@@ -114,8 +115,14 @@ export function Sidebar() {
         {/* Logo */}
         <div className="p-6 border-b border-primary/10">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="h-10 w-10 rounded-xl gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg group-hover:shadow-primary/50 transition-shadow">
-              <Activity className="h-6 w-6 text-white" />
+            <div className="rounded-xl shadow-lg group-hover:shadow-primary/50 transition-shadow">
+              <Image
+                src="/logo.jpeg"
+                alt="Octopus Logo"
+                width={50}
+                height={50}
+                className="rounded-md object-cover"
+              />
             </div>
             <div>
               <h2 className="font-bold text-lg gradient-text">Octopus</h2>
@@ -135,7 +142,7 @@ export function Sidebar() {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg transition-all group',
                   'hover:bg-white/5 hover:shadow-md',
-                  isActive && 'gradient-to-r from-primary/20 to-secondary/20 shadow-lg border border-primary/20'
+                  isActive && 'gradient-to-r from-primary/20 to-secondary/20 shadow-lg border border-primary/20 glow-primary'
                 )}
               >
                 <item.icon

@@ -212,7 +212,7 @@ export function AgentActivityPanel({
     const isEmpty = analyses.length === 0 && executions.length === 0;
 
     return (
-        <Card className={`glass ${className}`}>
+        <Card className={`glass glow-primary ${className}`}>
             {showHeader && (
                 <CardHeader>
                     <div className="flex items-center justify-between">

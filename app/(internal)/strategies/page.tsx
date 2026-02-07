@@ -248,7 +248,7 @@ export default function StrategiesPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card className="glass border-primary/20 bg-primary/5">
+            <Card className="glass glow-primary border-primary/20 bg-primary/5">
               <CardContent className="p-6 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-full ${isAutoRebalanceEnabled ? 'bg-green-500/20 text-green-500' : 'bg-muted text-muted-foreground'}`}>
@@ -294,7 +294,7 @@ export default function StrategiesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -317,7 +317,7 @@ export default function StrategiesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -340,7 +340,7 @@ export default function StrategiesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -363,7 +363,7 @@ export default function StrategiesPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -383,7 +383,7 @@ export default function StrategiesPage() {
         </div>
 
         {/* Filters and Search */}
-        <Card className="glass">
+        <Card className="glass glow-primary">
           <CardContent className="p-6">
             <div className="space-y-4">
               {/* Search */}
@@ -541,7 +541,7 @@ export default function StrategiesPage() {
             ))}
           </div>
         ) : (
-          <Card className="glass">
+          <Card className="glass glow-primary">
             <CardContent className="p-12 text-center">
               <div className="max-w-md mx-auto">
                 <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
@@ -568,7 +568,7 @@ export default function StrategiesPage() {
 
         {/* Info Section */}
         <div className="grid md:grid-cols-1 gap-6">
-          <Card className="glass border-primary/20">
+          <Card className="glass glow-primary border-primary/20">
             <CardContent className="p-6">
               <h3 className="font-semibold text-lg mb-3">How It Works</h3>
               <div className="space-y-3 text-sm">
