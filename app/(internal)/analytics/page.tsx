@@ -203,148 +203,70 @@ export default function AnalyticsPage() {
           </motion.div>
         </div>
 
-        {/* Charts Row */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        {/* Charts and Risk Row */}
+        <div className="grid lg:grid-cols-12 gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
+            className="lg:col-span-8"
           >
             <PortfolioPerformanceChart />
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6 }}
+            className="lg:col-span-4"
           >
-            {/* <APYProjectionChart currentAPY={estimatedApy} /> */}
+            <RiskMetrics
+              ltv={ltv}
+              healthFactor={healthFactor}
+              healthStatus={healthStatus}
+            />
           </motion.div>
         </div>
 
-        {/* Detailed Metrics */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        {/* Detailed Metrics and Market Row */}
+        <div className="grid lg:grid-cols-12 gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="lg:col-span-2"
+            className="lg:col-span-8"
           >
-            <Card className="glass">
+            <Card className="glass h-full">
               <CardHeader>
                 <CardTitle>Asset Breakdown</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Vault Collateral */}
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
-                        <Shield className="h-5 w-5 text-cyan-500" />
-                      </div>
-                      <div>
-                        <div className="font-semibold">
-                          Vault Collateral
+                  {/* Assets Mapping */}
+                  {[
+                    { label: "Vault Collateral", amount: collateral, val: collateralValue, icon: Shield, color: "text-cyan-500", bg: "bg-cyan-500/20", unit: "octSUI" },
+                    { label: "Wallet octSUI", amount: octsuiBalance, val: octsuiBalanceValue, icon: Activity, color: "text-primary", bg: "bg-primary/20", unit: "octSUI" },
+                    { label: "MOCKSUI", amount: mocksuiBalance, val: mocksuiBalanceValue, icon: Zap, color: "text-blue-500", bg: "bg-blue-500/20", unit: "MOCKSUI" },
+                    { label: "octUSD", amount: octusdBalance, val: octusdBalanceValue, icon: DollarSign, color: "text-green-500", bg: "bg-green-500/20", unit: "octUSD" },
+                  ].map((asset) => (
+                    <div key={asset.label} className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted/80 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-10 w-10 rounded-full ${asset.bg} flex items-center justify-center`}>
+                          <asset.icon className={`h-5 w-5 ${asset.color}`} />
                         </div>
+                        <div>
+                          <div className="font-semibold">{asset.label}</div>
+                          <div className="text-sm text-muted-foreground">{formatAmount(asset.amount)} {asset.unit}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold">{formatCurrency(asset.val)}</div>
                         <div className="text-sm text-muted-foreground">
-                          {formatAmount(collateral)} octSUI
+                          {((asset.val / totalPortfolioValue) * 100).toFixed(1)}%
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold">
-                        {formatCurrency(collateralValue)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {(
-                          (collateralValue / totalPortfolioValue) *
-                          100
-                        ).toFixed(1)}
-                        %
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Wallet octSUI */}
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Activity className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="font-semibold">Wallet octSUI</div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatAmount(octsuiBalance)} octSUI
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold">
-                        {formatCurrency(octsuiBalanceValue)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {(
-                          (octsuiBalanceValue / totalPortfolioValue) *
-                          100
-                        ).toFixed(1)}
-                        %
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* MOCKSUI */}
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <Zap className="h-5 w-5 text-blue-500" />
-                      </div>
-                      <div>
-                        <div className="font-semibold">MOCKSUI</div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatAmount(mocksuiBalance)} MOCKSUI
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold">
-                        {formatCurrency(mocksuiBalanceValue)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {(
-                          (mocksuiBalanceValue / totalPortfolioValue) *
-                          100
-                        ).toFixed(1)}
-                        %
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* octUSD */}
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <DollarSign className="h-5 w-5 text-green-500" />
-                      </div>
-                      <div>
-                        <div className="font-semibold">octUSD</div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatAmount(octusdBalance)} octUSD
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold">
-                        {formatCurrency(octusdBalanceValue)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {(
-                          (octusdBalanceValue / totalPortfolioValue) *
-                          100
-                        ).toFixed(1)}
-                        %
-                      </div>
-                    </div>
-                  </div>
+                  ))}
 
                   {/* Debt */}
                   {Number(debt) > 0 && (
@@ -354,21 +276,13 @@ export default function AnalyticsPage() {
                           <TrendingDown className="h-5 w-5 text-red-500" />
                         </div>
                         <div>
-                          <div className="font-semibold text-red-500">
-                            Borrowed Debt
-                          </div>
-                          <div className="text-sm text-red-500/70">
-                            {formatAmount(debt)} octUSD
-                          </div>
+                          <div className="font-semibold text-red-500">Borrowed Debt</div>
+                          <div className="text-sm text-red-500/70">{formatAmount(debt)} octUSD</div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold text-red-500">
-                          -{formatCurrency(debtValue)}
-                        </div>
-                        <div className="text-sm text-red-500/70">
-                          LTV: {ltv.toFixed(1)}%
-                        </div>
+                        <div className="font-semibold text-red-500">-{formatCurrency(debtValue)}</div>
+                        <div className="text-sm text-red-500/70">LTV: {ltv.toFixed(1)}%</div>
                       </div>
                     </div>
                   )}
@@ -381,53 +295,47 @@ export default function AnalyticsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
+            className="lg:col-span-4"
           >
-            <RiskMetrics
-              ltv={ltv}
-              healthFactor={healthFactor}
-              healthStatus={healthStatus}
-            />
+            <div className="space-y-6 flex flex-col h-full">
+              <Card className="glass flex-1">
+                <CardHeader>
+                  <CardTitle>Market Prices</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <div className="text-sm text-muted-foreground mb-1">octSUI Price</div>
+                    <div className="text-2xl font-bold">{formatCurrency(octsuiPrice)}</div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <div className="text-sm text-muted-foreground mb-1">octUSD Price</div>
+                    <div className="text-2xl font-bold">$1.00</div>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <div className="text-sm text-muted-foreground mb-1">Staking APY</div>
+                    <div className="text-2xl font-bold text-green-500">{formatPercent(estimatedApr / 100)}</div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions or Tips */}
+              <Card className="glass bg-primary/5 border-primary/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-2 text-primary font-semibold">
+                    <Activity className="h-4 w-4" />
+                    AI Insights
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Your portfolio is currently <b>{healthStatus.toUpperCase()}</b>. AI active protection is standing by to prevent any liquidation risk.
+                  </p>
+                  <Button variant="outline" className="w-full text-xs" size="sm">
+                    Optimize Shield
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </motion.div>
         </div>
-
-        {/* Market Info */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
-        >
-          <Card className="glass">
-            <CardHeader>
-              <CardTitle>Market Prices</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg bg-muted">
-                  <div className="text-sm text-muted-foreground mb-1">
-                    octSUI Price
-                  </div>
-                  <div className="text-2xl font-bold">
-                    {formatCurrency(octsuiPrice)}
-                  </div>
-                </div>
-                <div className="p-4 rounded-lg bg-muted">
-                  <div className="text-sm text-muted-foreground mb-1">
-                    octUSD Price
-                  </div>
-                  <div className="text-2xl font-bold">$1.00</div>
-                </div>
-                <div className="p-4 rounded-lg bg-muted">
-                  <div className="text-sm text-muted-foreground mb-1">
-                    Staking APY
-                  </div>
-                  <div className="text-2xl font-bold text-green-500">
-                    {formatPercent(estimatedApr / 100)}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
       </div>
     </div>
   );
