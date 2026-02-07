@@ -66,7 +66,7 @@ export default function BorrowPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="glass border-primary/20">
+          <Card className="glass glow-primary border-primary/20">
             <CardContent className="p-12 text-center">
               <Shield className="h-20 w-20 text-primary mx-auto mb-6" />
               <h3 className="text-3xl font-bold mb-3">
@@ -105,7 +105,7 @@ export default function BorrowPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="glass">
+            <Card className="glass glow-primary">
               <CardContent className="p-6">
                 <Shield className="h-12 w-12 text-cyan-500 mb-4" />
                 <h4 className="font-semibold mb-2">Deposit Collateral</h4>
@@ -122,7 +122,7 @@ export default function BorrowPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="glass">
+            <Card className="glass glow-primary">
               <CardContent className="p-6">
                 <TrendingUp className="h-12 w-12 text-green-500 mb-4" />
                 <h4 className="font-semibold mb-2">Borrow octUSD</h4>
@@ -139,7 +139,7 @@ export default function BorrowPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="glass">
+            <Card className="glass glow-primary">
               <CardContent className="p-6">
                 <Zap className="h-12 w-12 text-amber-500 mb-4" />
                 <h4 className="font-semibold mb-2">AI Protection</h4>
@@ -158,7 +158,7 @@ export default function BorrowPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <Card className="glass">
+          <Card className="glass glow-primary">
             <CardHeader>
               <CardTitle>How Vaults Work</CardTitle>
             </CardHeader>

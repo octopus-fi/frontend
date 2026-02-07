@@ -159,7 +159,7 @@ export default function LiquidatePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -182,7 +182,7 @@ export default function LiquidatePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -205,7 +205,7 @@ export default function LiquidatePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -228,7 +228,7 @@ export default function LiquidatePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -259,7 +259,7 @@ export default function LiquidatePage() {
         )}
 
         {/* Filters and Search */}
-        <Card className="glass">
+        <Card className="glass glow-primary">
           <CardContent className="p-6">
             <div className="space-y-4">
               {/* Search */}
@@ -405,7 +405,7 @@ export default function LiquidatePage() {
             ))}
           </div>
         ) : (
-          <Card className="glass">
+          <Card className="glass glow-primary">
             <CardContent className="p-12 text-center">
               <div className="max-w-md mx-auto">
                 <AlertCircle className="h-16 w-16 text-muted-foreground mx-auto mb-4 opacity-50" />
@@ -435,7 +435,7 @@ export default function LiquidatePage() {
 
         {/* Info Section */}
         <div className="grid md:grid-cols-2 gap-6">
-          <Card className="glass border-primary/20">
+          <Card className="glass glow-primary border-primary/20">
             <CardHeader>
               <CardTitle className="text-base">
                 How Flash Liquidation Works
@@ -498,7 +498,7 @@ export default function LiquidatePage() {
             </CardContent>
           </Card>
 
-          <Card className="glass border-primary/20 bg-primary/5">
+          <Card className="glass glow-primary border-primary/20 bg-primary/5">
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
                 <Info className="h-5 w-5 text-primary" />

@@ -26,8 +26,8 @@ interface PortfolioPerformanceChartProps {
   initialValue?: number;
 }
 
-export function PortfolioPerformanceChart({ 
-  initialValue = 100000 
+export function PortfolioPerformanceChart({
+  initialValue = 100000
 }: PortfolioPerformanceChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
 
@@ -111,7 +111,7 @@ export function PortfolioPerformanceChart({
   };
 
   return (
-    <Card className="glass border-primary/20">
+    <Card className="glass glow-primary border-primary/20">
       <CardHeader>
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
@@ -125,9 +125,9 @@ export function PortfolioPerformanceChart({
               </Badge>
               <span className="text-sm text-muted-foreground">
                 {timeRange === '7d' ? 'Last 7 days' :
-                 timeRange === '30d' ? 'Last 30 days' :
-                 timeRange === '90d' ? 'Last 90 days' :
-                 timeRange === '1y' ? 'Last year' : 'All time'}
+                  timeRange === '30d' ? 'Last 30 days' :
+                    timeRange === '90d' ? 'Last 90 days' :
+                      timeRange === '1y' ? 'Last year' : 'All time'}
               </span>
             </div>
           </div>
@@ -154,39 +154,39 @@ export function PortfolioPerformanceChart({
           <AreaChart data={data}>
             <defs>
               <linearGradient id="totalValueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
               </linearGradient>
             </defs>
-            
-            <CartesianGrid 
-              strokeDasharray="3 3" 
+
+            <CartesianGrid
+              strokeDasharray="3 3"
               stroke="rgba(255,255,255,0.1)"
               vertical={false}
             />
-            
-            <XAxis 
-              dataKey="date" 
+
+            <XAxis
+              dataKey="date"
               stroke="#6B7280"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
-            
-            <YAxis 
+
+            <YAxis
               stroke="#6B7280"
               fontSize={12}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
             />
-            
+
             <Tooltip content={<CustomTooltip />} />
-            
-            <Area 
-              type="monotone" 
-              dataKey="totalValue" 
-              stroke="#06b6d4" 
+
+            <Area
+              type="monotone"
+              dataKey="totalValue"
+              stroke="#06b6d4"
               strokeWidth={3}
               fill="url(#totalValueGradient)"
               name="Total Value"
@@ -199,53 +199,53 @@ export function PortfolioPerformanceChart({
           <div className="text-sm font-medium mb-3">Value Breakdown</div>
           <ResponsiveContainer width="100%" height={250}>
             <ComposedChart data={data}>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
+              <CartesianGrid
+                strokeDasharray="3 3"
                 stroke="rgba(255,255,255,0.1)"
                 vertical={false}
               />
-              
-              <XAxis 
-                dataKey="date" 
+
+              <XAxis
+                dataKey="date"
                 stroke="#6B7280"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
-              
-              <YAxis 
+
+              <YAxis
                 stroke="#6B7280"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
               />
-              
+
               <Tooltip content={<CustomTooltip />} />
-              
-              <Legend 
+
+              <Legend
                 wrapperStyle={{ fontSize: '12px' }}
                 iconType="rect"
               />
-              
-              <Bar 
-                dataKey="collateral" 
-                fill="#10B981" 
+
+              <Bar
+                dataKey="collateral"
+                fill="#10B981"
                 name="Collateral"
                 radius={[4, 4, 0, 0]}
               />
-              
-              <Bar 
-                dataKey="debt" 
-                fill="#EF4444" 
+
+              <Bar
+                dataKey="debt"
+                fill="#EF4444"
                 name="Debt"
                 radius={[4, 4, 0, 0]}
               />
-              
-              <Line 
-                type="monotone" 
-                dataKey="netValue" 
-                stroke="#06b6d4" 
+
+              <Line
+                type="monotone"
+                dataKey="netValue"
+                stroke="#06b6d4"
                 strokeWidth={2}
                 dot={false}
                 name="Net Value"

@@ -102,7 +102,7 @@ export default function AnalyticsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="glass border-primary/20 relative overflow-hidden group">
+            <Card className="glass glow-primary border-primary/20 relative overflow-hidden group">
               <div className="absolute inset-0 gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -126,7 +126,7 @@ export default function AnalyticsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Net Worth
@@ -149,7 +149,7 @@ export default function AnalyticsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Est. APY
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Health Factor
@@ -236,7 +236,7 @@ export default function AnalyticsPage() {
             transition={{ delay: 0.7 }}
             className="lg:col-span-8"
           >
-            <Card className="glass h-full">
+            <Card className="glass glow-primary h-full">
               <CardHeader>
                 <CardTitle>Asset Breakdown</CardTitle>
               </CardHeader>
@@ -298,7 +298,7 @@ export default function AnalyticsPage() {
             className="lg:col-span-4"
           >
             <div className="space-y-6 flex flex-col h-full">
-              <Card className="glass flex-1">
+              <Card className="glass glow-primary flex-1">
                 <CardHeader>
                   <CardTitle>Market Prices</CardTitle>
                 </CardHeader>
@@ -319,7 +319,7 @@ export default function AnalyticsPage() {
               </Card>
 
               {/* Quick Actions or Tips */}
-              <Card className="glass bg-primary/5 border-primary/20">
+              <Card className="glass glow-primary bg-primary/5 border-primary/20">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-2 text-primary font-semibold">
                     <Activity className="h-4 w-4" />

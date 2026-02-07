@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 import {
-  Waves,
   Menu,
   X,
   Wallet,
@@ -45,7 +45,13 @@ export function Header() {
           </Button>
 
           <Link href="/" className="flex items-center gap-2">
-            <Waves className="h-6 w-6 text-primary animate-float" />
+            <Image
+              src="/logo.jpeg"
+              alt="Octopus Logo"
+              width={40}
+              height={40}
+              className="rounded-md object-contain"
+            />
             <span className="hidden sm:inline font-bold gradient-text text-xl">
               Octopus Finance
             </span>

@@ -65,18 +65,18 @@ export function RiskMetrics({ ltv, healthFactor, healthStatus }: RiskMetricsProp
   ];
 
   return (
-    <Card className="glass">
+    <Card className="glass glow-primary">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Risk Assessment</CardTitle>
-          <Badge 
+          <Badge
             variant={
               risk.level === 'high' ? 'danger' :
-              risk.level === 'medium' ? 'warning' : 'success'
+                risk.level === 'medium' ? 'warning' : 'success'
             }
           >
             {risk.level === 'high' ? 'High Risk' :
-             risk.level === 'medium' ? 'Medium Risk' : 'Low Risk'}
+              risk.level === 'medium' ? 'Medium Risk' : 'Low Risk'}
           </Badge>
         </div>
       </CardHeader>
@@ -101,12 +101,12 @@ export function RiskMetrics({ ltv, healthFactor, healthStatus }: RiskMetricsProp
           <ResponsiveContainer width="100%" height="100%">
             <RadarChart data={radarData}>
               <PolarGrid stroke="#ffffff15" />
-              <PolarAngleAxis 
-                dataKey="metric" 
+              <PolarAngleAxis
+                dataKey="metric"
                 tick={{ fill: '#94a3b8', fontSize: 12 }}
               />
-              <PolarRadiusAxis 
-                angle={90} 
+              <PolarRadiusAxis
+                angle={90}
                 domain={[0, 100]}
                 tick={{ fill: '#94a3b8', fontSize: 10 }}
               />

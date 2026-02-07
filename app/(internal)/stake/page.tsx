@@ -487,7 +487,7 @@ export default function StakePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -510,7 +510,7 @@ export default function StakePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -530,7 +530,7 @@ export default function StakePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -550,7 +550,7 @@ export default function StakePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="glass border-primary/20">
+            <Card className="glass glow-primary border-primary/20">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">
@@ -574,7 +574,7 @@ export default function StakePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Card className="glass border-primary/20">
+              <Card className="glass glow-primary border-primary/20">
                 <CardHeader>
                   <CardTitle>Stake / Unstake</CardTitle>
                   <CardDescription>
@@ -748,7 +748,7 @@ export default function StakePage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.55 }}
               >
-                <Card className="glass border-green-500/20 bg-green-500/5">
+                <Card className="glass glow-primary border-green-500/20 bg-green-500/5">
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -819,7 +819,7 @@ export default function StakePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.6 }}
             >
-              <Card className="glass">
+              <Card className="glass glow-primary">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Info className="h-5 w-5" />
@@ -884,7 +884,7 @@ export default function StakePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.7 }}
             >
-              <Card className="glass border-amber-500/20 bg-amber-500/5">
+              <Card className="glass glow-primary border-amber-500/20 bg-amber-500/5">
                 <CardHeader>
                   <CardTitle className="text-amber-500 flex items-center gap-2">
                     <Info className="h-5 w-5" />
