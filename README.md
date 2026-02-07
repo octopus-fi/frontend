@@ -74,7 +74,7 @@ npm >= 9.0.0
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/octopus-finance/frontend.git
+git clone https://github.com/octopus-fi/frontend.git
 cd frontend
 
 # 2. Install dependencies
@@ -412,41 +412,11 @@ CMD ["npm", "start"]
 ### Getting Help
 
 - 💬 [Discord Community](https://discord.gg/octopus)
-- 🐛 [GitHub Issues](https://github.com/octopus-finance/frontend/issues)
+- 🐛 [GitHub Issues](https://github.com/octopus-fi/frontend/issues)
 - 📧 Email: support@octopus.finance
 
 ---
 
-## 📊 Project Status
-
-### Integration Status: 100% Complete ✅
-
-**Pages Integrated:** 5/5 (100%)
-- ✅ Dashboard, Stake, Borrow List, Vault Detail, Analytics
-
-**Transactions Working:** 11/11 (100%)
-- ✅ All core flows functional
-
-**Components:** 15/15 critical integrated (100%)
-- ✅ All essential components using real data
-
-**User Flows:** 5/5 complete (100%)
-- ✅ Staking, Vault creation, Borrowing, Repaying, Liquidating
-
----
-
-## 🏆 Hackathon Submission
-
-**HackMoney 2026 - Sui Track**
-
-### What We Built
-
-A complete, production-ready frontend for an AI-powered CDP:
-- ✅ 100% real blockchain integration
-- ✅ 11 working transaction types
-- ✅ Complete user flows
-- ✅ Professional UX
-- ✅ ~14,000 lines of code
 
 ### Innovation Highlights
 
