@@ -459,7 +459,7 @@ A complete, production-ready frontend for an AI-powered CDP:
 ### Demo
 
 - 🌐 **Live**: [octopus-fi.vercel.app](https://octopus-fi.vercel.app)
-- 📝 **Contracts**: [GitHub](https://github.com/octopus-finance/contracts)
+- 📝 **Contracts**: [GitHub](https://github.com/octopus-fi/contracts)
 
 ---
 
@@ -490,14 +490,10 @@ MIT License - see [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Contact
-
-- 🌐 [octopus.finance](https://octopus.finance)
-- 💬 [Discord](https://discord.gg/octopus)
-- 🐦 [@OctopusFi](https://twitter.com/OctopusFi)
-- 📧 team@octopus.finance
-
----
+### Demo & Links
+- **Demo Video**: [YouTube](https://www.youtube.com/watch?v=GZ7HNIlw2QM)
+- **Live Demo**: [octopus.finance](https://octopus-fi.vercel.app/)
+- **GitHub**: [github.com/octopus-finance](https://github.com/octopus-fi)
 
 <div align="center">
 
@@ -505,6 +501,5 @@ MIT License - see [LICENSE](LICENSE) file
 
 ⭐ Star us on GitHub!
 
-[Website](https://octopus.finance) • [Docs](https://docs.octopus.finance) • [Discord](https://discord.gg/octopus) • [Twitter](https://twitter.com/OctopusFi)
 
 </div>
