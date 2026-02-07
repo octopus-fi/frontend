@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/store/ui-store';
-import { usePoolStats } from '@/sdk/index';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -27,12 +26,6 @@ import { formatPercent } from '@/lib/utils';
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, setSidebarOpen } = useUIStore();
-  const { data: poolStats } = usePoolStats();
-
-  // Calculate APY from pool stats
-  const estimatedApy = poolStats
-    ? (poolStats.rewardRateBps * 365) / 100
-    : 7.2;
 
   const navigation = [
     {
@@ -44,7 +37,6 @@ export function Sidebar() {
       name: 'Stake',
       href: '/stake',
       icon: Waves,
-      badge: `~${formatPercent(estimatedApy / 100)}`,
     },
     {
       name: 'Borrow',

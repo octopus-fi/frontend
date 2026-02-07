@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -288,7 +289,17 @@ export function BorrowForm({
               onValueChange={(values) => setBorrowAmount(values[0].toString())}
               className="cursor-pointer"
             />
-            <div className="w-full h-1.5 rounded-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 opacity-50" />
+            <div className="relative w-full h-1.5 rounded-full overflow-hidden bg-muted/30">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 opacity-20" />
+              <motion.div
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 via-yellow-500 to-red-500"
+                initial={{ width: 0 }}
+                animate={{
+                  width: `${Math.min(100, ((parseFloat(borrowAmount) || 0) / Math.max(0.01, (preview?.maxBorrowUsd || maxBorrow) - (Number(currentDebt) / 1e9))) * 100)}%`
+                }}
+                transition={{ duration: 0.1 }}
+              />
+            </div>
           </div>
         </div>
 

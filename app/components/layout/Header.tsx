@@ -19,10 +19,12 @@ import { useUIStore } from "@/store/ui-store";
 import { usePhantomWallet } from "@/hooks/usePhantomWallet";
 import { truncateAddress, formatCurrency } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useDashboard } from "@/sdk/hooks";
 
 export function Header() {
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const { address, connected, balance, disconnect } = useWalletStore();
+  const { address, connected, disconnect } = useWalletStore();
+  const { mocksuiBalance, octsuiBalance, octusdBalance } = useDashboard();
   const { toggleSidebar, notifications } = useUIStore();
   const { connectWallet, disconnectWallet } = usePhantomWallet();
 
@@ -50,11 +52,39 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Right: Notifications + Wallet */}
+        {/* Right: Balance + Notifications + Wallet */}
         <div className="flex items-center gap-4">
+          {/* Real-time Balances (Desktop Only) */}
+          {connected && address && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="hidden lg:flex items-center gap-6 pr-4 border-r border-white/10"
+            >
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] text-muted-foreground leading-none mb-1 uppercase tracking-wider">SUI</span>
+                <span className="text-sm font-mono font-bold text-primary">
+                  {(Number(mocksuiBalance) / 1e9).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] text-muted-foreground leading-none mb-1 uppercase tracking-wider">octSUI</span>
+                <span className="text-sm font-mono font-bold text-primary">
+                  {(Number(octsuiBalance) / 1e9).toFixed(2)}
+                </span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] text-muted-foreground leading-none mb-1 uppercase tracking-wider">octUSD</span>
+                <span className="text-sm font-mono font-bold text-green-500">
+                  {formatCurrency(Number(octusdBalance) / 1e9)}
+                </span>
+              </div>
+            </motion.div>
+          )}
+
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
+          <Button variant="ghost" size="icon" className="relative group">
+            <Bell className="h-5 w-5 group-hover:text-primary transition-colors" />
             {unreadCount > 0 && (
               <Badge
                 variant="danger"
@@ -97,19 +127,19 @@ export function Header() {
                         <div className="flex justify-between items-center">
                           <span className="text-sm">SUI</span>
                           <span className="font-mono font-bold">
-                            {formatCurrency(Number(balance.sui) / 1e9)}
+                            {formatCurrency(Number(mocksuiBalance) / 1e9)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">octSUI</span>
                           <span className="font-mono font-bold">
-                            {formatCurrency(Number(balance.octSUI) / 1e9)}
+                            {formatCurrency(Number(octsuiBalance) / 1e9)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-sm">octUSD</span>
                           <span className="font-mono font-bold">
-                            {formatCurrency(Number(balance.octUSD) / 1e6)}
+                            {formatCurrency(Number(octusdBalance) / 1e9)}
                           </span>
                         </div>
                       </div>

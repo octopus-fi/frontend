@@ -24,7 +24,7 @@ export function HealthFactorGauge({
   // Clamp value to reasonable range for display
   const displayValue = healthFactor === Infinity ? 3.0 : Math.min(healthFactor, 3.0);
   const percentage = (displayValue / 3.0) * 100;
-  
+
   // Determine color and status based on health factor
   const getColorAndStatus = () => {
     if (healthFactor < 1.0) {
@@ -79,7 +79,7 @@ export function HealthFactorGauge({
             {status}
           </Badge>
         </div>
-        
+
         <div className="relative h-2 bg-muted rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
@@ -89,7 +89,7 @@ export function HealthFactorGauge({
             style={{ backgroundColor: color }}
           />
         </div>
-        
+
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">
             {healthFactor === Infinity ? '∞' : healthFactor.toFixed(2)}×
@@ -130,7 +130,7 @@ export function HealthFactorGauge({
                 stroke="#ffffff10"
                 strokeWidth="12"
               />
-              
+
               {/* Progress circle */}
               <motion.circle
                 cx="100"
@@ -149,10 +149,10 @@ export function HealthFactorGauge({
                 className={glowClass}
               />
             </svg>
-            
+
             {/* Center value */}
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <StatusIcon 
+              <StatusIcon
                 className="h-8 w-8 mb-2"
                 style={{ color }}
               />
@@ -176,7 +176,7 @@ export function HealthFactorGauge({
               {ltv.toFixed(1)}%
             </div>
           </div>
-          
+
           <div className="p-3 rounded-lg bg-muted">
             <div className="text-xs text-muted-foreground mb-1">Max LTV</div>
             <div className="text-2xl font-bold">
@@ -197,16 +197,25 @@ export function HealthFactorGauge({
             <div className="absolute inset-y-0 left-[60%] w-[10%] bg-yellow-500/20" />
             <div className="absolute inset-y-0 left-[70%] w-[10%] bg-orange-500/20" />
             <div className="absolute inset-y-0 left-[80%] w-[20%] bg-red-500/20" />
-            
+
+            {/* Current progress fill */}
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(ltv, 100)}%` }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+              className="absolute inset-y-0 left-0 opacity-80 shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+              style={{ backgroundColor: color }}
+            />
+
             {/* Current position indicator */}
             <motion.div
               initial={{ left: 0 }}
               animate={{ left: `${Math.min(ltv, 100)}%` }}
               transition={{ duration: 1, ease: 'easeOut' }}
-              className="absolute inset-y-0 w-1 -ml-0.5"
+              className="absolute inset-y-0 w-0.5 -ml-px z-10"
               style={{ backgroundColor: color }}
             >
-              <div 
+              <div
                 className="absolute -top-2 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent"
                 style={{ borderBottomColor: color }}
               />
@@ -243,7 +252,7 @@ export function HealthFactorGauge({
                 {healthFactor < 1.2 ? 'Critical: Immediate Action Required' : 'Warning: Health Declining'}
               </div>
               <p className="text-sm text-muted-foreground">
-                {healthFactor < 1.2 
+                {healthFactor < 1.2
                   ? 'Your vault is at high risk of liquidation. Add collateral or repay debt immediately.'
                   : 'Consider adding collateral or repaying debt to improve your vault health.'}
               </p>
