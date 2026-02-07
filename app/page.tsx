@@ -227,7 +227,7 @@ export default function LandingPage() {
               <div className="px-4 py-2 rounded-full border border-primary/50 bg-primary/10 backdrop-blur-sm">
                 <span className="text-sm font-medium text-primary flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  World's First AI-Protected CDP on Sui
+                  First AI-Protected LST + CDP on Sui
                 </span>
               </div>
             </motion.div>
@@ -634,7 +634,7 @@ export default function LandingPage() {
               From Zero to <span className="gradient-text">DeFi Hero</span>
             </h2>
             <p className="text-xl text-muted-foreground">
-              Start earning in 3 simple steps—no crypto PhD required
+              Start earning in 3 simple steps
             </p>
           </motion.div>
 
